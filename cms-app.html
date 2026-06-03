@@ -250,6 +250,8 @@ select option{background:var(--surface2)}
     <div class="nav-tab active" onclick="showSection('dashboard',this)">📊 لوحة التحكم</div>
     <div class="nav-tab" onclick="showSection('templates',this)">🎨 التامبلت</div>
     <div class="nav-tab" onclick="showSection('users',this)">👥 المستخدمين</div>
+    <div class="nav-tab" onclick="showSection('limits',this)">🔒 حدود الخطط</div>
+    <div class="nav-tab" onclick="showSection('watermark',this)">💧 Watermark</div>
     <div class="nav-tab" onclick="showSection('settings',this)">⚙️ الإعدادات</div>
   </nav>
 
@@ -299,6 +301,130 @@ select option{background:var(--surface2)}
     </div>
 
     <!-- SETTINGS -->
+    <!-- LIMITS SECTION -->
+    <div class="section" id="section-limits">
+      <div class="settings-grid">
+        <div class="setting-card">
+          <div class="setting-title">📊 حدود النسخة المجانية</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>أقصى عدد للصور (0 = بلا حد)</label>
+            <input type="number" id="lim-max-images" value="3" min="0" max="50">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>أقصى عدد للأشكال (0 = بلا حد)</label>
+            <input type="number" id="lim-max-shapes" value="3" min="0" max="50">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>أقصى عدد للنصوص الإضافية (0 = بلا حد)</label>
+            <input type="number" id="lim-max-extras" value="3" min="0" max="50">
+          </div>
+          <button class="btn btn-accent" onclick="saveLimits()">💾 حفظ الحدود</button>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">📤 التصدير للمجاني</div>
+          <div class="toggle-row">
+            <div><span class="toggle-label">تصدير PNG</span></div>
+            <label class="toggle"><input type="checkbox" id="lim-free-png" checked onchange="saveLimitToggle('freePng',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div><span class="toggle-label">تصدير PDF</span></div>
+            <label class="toggle"><input type="checkbox" id="lim-free-pdf" onchange="saveLimitToggle('freePdf',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div><span class="toggle-label">تصدير JPG</span></div>
+            <label class="toggle"><input type="checkbox" id="lim-free-jpg" checked onchange="saveLimitToggle('freeJpg',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">🔢 مضاعفات التصدير</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>مضاعفات المجاني (مثال: 1)</label>
+            <input type="text" id="lim-free-mults" value="1" placeholder="1">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">أرقام مفصولة بفاصلة — مثال: 1,2</div>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>مضاعفات Pro (مثال: 1,2,4)</label>
+            <input type="text" id="lim-pro-mults" value="1,2,4" placeholder="1,2,4">
+          </div>
+          <button class="btn btn-accent" onclick="saveMults()">💾 حفظ المضاعفات</button>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">🌐 المجتمع</div>
+          <div class="toggle-row">
+            <div><span class="toggle-label">تصاميم المجتمع للمجاني</span><div style="font-size:11px;color:var(--muted);margin-top:2px">إيقاف = تصاميم Pro فقط للمشتركين</div></div>
+            <label class="toggle"><input type="checkbox" id="lim-community-free" checked onchange="saveLimitToggle('communityFree',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div><span class="toggle-label">النشر في المجتمع للمجاني</span></div>
+            <label class="toggle"><input type="checkbox" id="lim-community-share" checked onchange="saveLimitToggle('communityShareFree',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WATERMARK SECTION -->
+    <div class="section" id="section-watermark">
+      <div class="settings-grid">
+        <div class="setting-card">
+          <div class="setting-title">💧 إعدادات Watermark</div>
+          <div class="toggle-row">
+            <span class="toggle-label">تفعيل Watermark للمجاني</span>
+            <label class="toggle"><input type="checkbox" id="wm-enabled" checked onchange="saveWmToggle('wmEnabled',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Watermark للبرو أيضاً</span>
+            <label class="toggle"><input type="checkbox" id="wm-pro-too" onchange="saveWmToggle('wmProToo',this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">📐 شكل وحجم Watermark</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>النص (اتركه فارغاً لو ترفع صورة)</label>
+            <input type="text" id="wm-text" value="بوستك" placeholder="بوستك">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>الحجم (% من عرض الكانفاس)</label>
+            <input type="number" id="wm-size" value="3" min="1" max="20" step="0.5">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>الشفافية (0-100)</label>
+            <input type="number" id="wm-opacity" value="15" min="1" max="100">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>الموقع</label>
+            <select id="wm-position">
+              <option value="bottom-right">أسفل يمين</option>
+              <option value="bottom-left">أسفل يسار</option>
+              <option value="bottom-center">أسفل وسط</option>
+              <option value="top-right">أعلى يمين</option>
+              <option value="top-left">أعلى يسار</option>
+              <option value="center">وسط</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>اللون</label>
+            <input type="color" id="wm-color" value="#ffffff" style="width:60px;height:36px;padding:2px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);cursor:pointer">
+          </div>
+          <button class="btn btn-accent" onclick="saveWatermarkSettings()">💾 حفظ Watermark</button>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">🖼 صورة Watermark (بديل النص)</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>رفع صورة PNG/SVG للـ Watermark</label>
+            <label class="upload-label" style="display:flex;align-items:center;justify-content:center;gap:8px;background:var(--surface2);border:2px dashed var(--border2);border-radius:10px;padding:16px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .2s">
+              📁 رفع صورة Watermark
+              <input type="file" accept="image/*" style="display:none" onchange="uploadWatermarkImg(this)">
+            </label>
+          </div>
+          <div id="wm-img-preview" style="display:none;margin-top:8px">
+            <img id="wm-img-thumb" style="max-width:100%;border-radius:8px;border:1px solid var(--border)">
+            <button class="btn btn-danger" style="margin-top:8px;font-size:11px" onclick="removeWatermarkImg()">🗑 إزالة الصورة</button>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:8px">لو رفعت صورة ستُستخدم بدل النص</div>
+        </div>
+      </div>
+    </div>
+
     <div class="section" id="section-settings">
       <div class="settings-grid">
         <div class="setting-card">
@@ -465,6 +591,8 @@ function showSection(id, tab){
   if(id === 'templates') loadTemplates();
   if(id === 'users') loadUsers();
   if(id === 'settings') loadSettings();
+  if(id === 'limits') loadLimits();
+  if(id === 'watermark') loadWatermarkSettings();
 }
 
 // ===== TOAST =====
@@ -681,6 +809,119 @@ async function resetOnboardingForAll(){
     await db.collection('settings').doc('app').set({onboardingResetKey: newKey},{merge:true});
     showToast('✅ ستظهر شاشة الترحيب للكل مرة ثانية');
   }catch(e){showToast('❌ '+e.message);}
+}
+
+// ===== LIMITS =====
+async function loadLimits(){
+  try{
+    const doc = await db.collection('settings').doc('limits').get();
+    if(!doc.exists) return;
+    const s = doc.data();
+    if(s.maxImages!==undefined) document.getElementById('lim-max-images').value=s.maxImages;
+    if(s.maxShapes!==undefined) document.getElementById('lim-max-shapes').value=s.maxShapes;
+    if(s.maxExtras!==undefined) document.getElementById('lim-max-extras').value=s.maxExtras;
+    if(s.freePng!==undefined) document.getElementById('lim-free-png').checked=s.freePng;
+    if(s.freePdf!==undefined) document.getElementById('lim-free-pdf').checked=s.freePdf;
+    if(s.freeJpg!==undefined) document.getElementById('lim-free-jpg').checked=s.freeJpg;
+    if(s.freeMults!==undefined) document.getElementById('lim-free-mults').value=s.freeMults;
+    if(s.proMults!==undefined) document.getElementById('lim-pro-mults').value=s.proMults;
+    if(s.communityFree!==undefined) document.getElementById('lim-community-free').checked=s.communityFree;
+    if(s.communityShareFree!==undefined) document.getElementById('lim-community-share').checked=s.communityShareFree;
+  }catch(e){ console.warn('loadLimits:', e.message); }
+}
+
+async function saveLimits(){
+  try{
+    await db.collection('settings').doc('limits').set({
+      maxImages: +document.getElementById('lim-max-images').value,
+      maxShapes: +document.getElementById('lim-max-shapes').value,
+      maxExtras: +document.getElementById('lim-max-extras').value,
+      freeMults: document.getElementById('lim-free-mults').value,
+      proMults: document.getElementById('lim-pro-mults').value,
+    },{merge:true});
+    showToast('✅ تم حفظ الحدود');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function saveMults(){
+  try{
+    await db.collection('settings').doc('limits').set({
+      freeMults: document.getElementById('lim-free-mults').value,
+      proMults: document.getElementById('lim-pro-mults').value,
+    },{merge:true});
+    showToast('✅ تم حفظ المضاعفات');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function saveLimitToggle(key, val){
+  try{
+    await db.collection('settings').doc('limits').set({[key]:val},{merge:true});
+    showToast('✅ تم الحفظ');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+// ===== WATERMARK =====
+async function loadWatermarkSettings(){
+  try{
+    const doc = await db.collection('settings').doc('watermark').get();
+    if(!doc.exists) return;
+    const s = doc.data();
+    if(s.wmEnabled!==undefined) document.getElementById('wm-enabled').checked=s.wmEnabled;
+    if(s.wmProToo!==undefined) document.getElementById('wm-pro-too').checked=s.wmProToo;
+    if(s.text!==undefined) document.getElementById('wm-text').value=s.text;
+    if(s.size!==undefined) document.getElementById('wm-size').value=s.size;
+    if(s.opacity!==undefined) document.getElementById('wm-opacity').value=s.opacity;
+    if(s.position!==undefined) document.getElementById('wm-position').value=s.position;
+    if(s.color!==undefined) document.getElementById('wm-color').value=s.color;
+    if(s.imgUrl){ 
+      document.getElementById('wm-img-preview').style.display='block';
+      document.getElementById('wm-img-thumb').src=s.imgUrl;
+    }
+  }catch(e){ console.warn('loadWatermark:', e.message); }
+}
+
+async function saveWmToggle(key, val){
+  try{
+    await db.collection('settings').doc('watermark').set({[key]:val},{merge:true});
+    showToast('✅ تم الحفظ');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function saveWatermarkSettings(){
+  try{
+    await db.collection('settings').doc('watermark').set({
+      text: document.getElementById('wm-text').value,
+      size: +document.getElementById('wm-size').value,
+      opacity: +document.getElementById('wm-opacity').value,
+      position: document.getElementById('wm-position').value,
+      color: document.getElementById('wm-color').value,
+    },{merge:true});
+    showToast('✅ تم حفظ Watermark');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function uploadWatermarkImg(input){
+  const file = input.files[0]; if(!file) return;
+  showToast('⏳ جاري الرفع...');
+  try{
+    const reader = new FileReader();
+    reader.onload = async e => {
+      const base64 = e.target.result;
+      await db.collection('settings').doc('watermark').set({imgUrl: base64},{merge:true});
+      document.getElementById('wm-img-preview').style.display='block';
+      document.getElementById('wm-img-thumb').src=base64;
+      showToast('✅ تم رفع صورة Watermark');
+    };
+    reader.readAsDataURL(file);
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function removeWatermarkImg(){
+  try{
+    await db.collection('settings').doc('watermark').set({imgUrl:''},{merge:true});
+    document.getElementById('wm-img-preview').style.display='none';
+    showToast('🗑 تم إزالة صورة Watermark');
+  }catch(e){ showToast('❌ '+e.message); }
 }
 
 async function saveSetting(key, value){
