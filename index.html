@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بوستك — لوحة التحكم</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#080810;
+  --surface:#0f0f1a;
+  --surface2:#16162a;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --text:#f0f0f8;
+  --muted:#6b7280;
+  --accent:#2dd4bf;
+  --accent2:#a78bfa;
+  --red:#f87171;
+  --green:#4ade80;
+  --yellow:#fbbf24;
+}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+
+/* ===== LOGIN ===== */
+#login-screen{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;
+}
+.login-card{
+  background:var(--surface);border:1px solid var(--border2);border-radius:20px;
+  padding:40px 32px;width:320px;display:flex;flex-direction:column;align-items:center;gap:20px;
+  box-shadow:0 0 80px rgba(45,212,191,0.06);
+}
+.login-logo{
+  width:64px;height:64px;background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;
+}
+.login-title{font-size:22px;font-weight:900;color:var(--text)}
+.login-sub{font-size:13px;color:var(--muted);text-align:center;line-height:1.6}
+.google-btn{
+  width:100%;background:#fff;border:none;border-radius:12px;padding:13px;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-size:14px;font-weight:700;color:#1a1a2e;cursor:pointer;
+  font-family:'Cairo',sans-serif;transition:all .2s;
+}
+.google-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.google-btn svg{width:20px;height:20px;flex-shrink:0}
+#login-error{font-size:12px;color:var(--red);text-align:center;display:none}
+
+/* ===== LAYOUT ===== */
+#app{display:none;min-height:100vh;flex-direction:column}
+#app.visible{display:flex}
+
+/* ===== HEADER ===== */
+header{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 24px;height:58px;display:flex;align-items:center;gap:16px;
+  position:sticky;top:0;z-index:100;
+}
+.header-logo{font-size:18px;font-weight:900;color:var(--accent);letter-spacing:-0.5px}
+.header-logo span{color:var(--muted);font-weight:400;font-size:12px;margin-right:8px}
+.header-right{margin-right:auto;display:flex;align-items:center;gap:12px}
+.user-chip{
+  display:flex;align-items:center;gap:8px;background:var(--surface2);
+  border:1px solid var(--border);border-radius:20px;padding:4px 12px 4px 4px;
+}
+.user-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover}
+.user-name{font-size:12px;color:var(--muted)}
+.signout-btn{
+  background:none;border:1px solid var(--border);color:var(--muted);
+  padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;
+  font-family:'Cairo',sans-serif;transition:all .2s;
+}
+.signout-btn:hover{border-color:var(--red);color:var(--red)}
+
+/* ===== NAV TABS ===== */
+nav{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:0 24px;display:flex;gap:0;
+}
+.nav-tab{
+  padding:14px 20px;font-size:13px;font-weight:600;color:var(--muted);
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;
+  font-family:'Cairo',sans-serif;display:flex;align-items:center;gap:6px;
+}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+
+/* ===== MAIN ===== */
+main{flex:1;padding:24px;max-width:1200px;width:100%;margin:0 auto}
+
+/* ===== SECTION ===== */
+.section{display:none}
+.section.active{display:block}
+
+/* ===== CARDS ===== */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;
+  padding:20px;display:flex;flex-direction:column;gap:6px;
+}
+.stat-num{font-size:28px;font-weight:900;color:var(--text)}
+.stat-label{font-size:12px;color:var(--muted)}
+.stat-icon{font-size:24px;margin-bottom:4px}
+
+/* ===== TABLE ===== */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px}
+.table-header{
+  padding:16px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.table-title{font-size:14px;font-weight:700;color:var(--text)}
+table{width:100%;border-collapse:collapse}
+th{
+  padding:10px 16px;text-align:right;font-size:11px;font-weight:600;
+  color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border);
+}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+
+/* ===== BADGES ===== */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-free{background:rgba(45,212,191,0.1);color:var(--accent);border:1px solid rgba(45,212,191,0.2)}
+.badge-pro{background:rgba(167,139,250,0.1);color:var(--accent2);border:1px solid rgba(167,139,250,0.2)}
+.badge-active{background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.2)}
+.badge-inactive{background:rgba(107,114,128,0.1);color:var(--muted);border:1px solid var(--border)}
+
+/* ===== BUTTONS ===== */
+.btn{
+  padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;
+  font-family:'Cairo',sans-serif;font-weight:600;border:none;transition:all .2s;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.btn-accent{background:var(--accent);color:#0d0d14}
+.btn-accent:hover{opacity:0.85}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{border-color:var(--border2)}
+.btn-danger{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+.btn-danger:hover{background:rgba(239,68,68,0.2)}
+.btn-purple{background:rgba(167,139,250,0.1);color:var(--accent2);border:1px solid rgba(167,139,250,0.2)}
+.btn-purple:hover{background:rgba(167,139,250,0.2)}
+
+/* ===== FORM ===== */
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}
+.form-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;color:var(--muted)}
+input,select,textarea{
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:9px 12px;border-radius:8px;font-size:13px;font-family:'Cairo',sans-serif;
+  width:100%;outline:none;transition:border .2s;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--surface2)}
+.upload-label{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--surface2);border:2px dashed var(--border2);border-radius:10px;
+  padding:16px;cursor:pointer;font-size:13px;color:var(--muted);
+  transition:all .2s;text-align:center;
+}
+.upload-label:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ===== SETTINGS ===== */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.setting-card{
+  background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;
+  display:flex;flex-direction:column;gap:14px;
+}
+.setting-title{font-size:13px;font-weight:700;color:var(--text)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.toggle-label{font-size:13px;color:var(--text)}
+.toggle{position:relative;width:44px;height:24px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{
+  position:absolute;inset:0;background:var(--surface2);border-radius:12px;
+  border:1px solid var(--border2);transition:.3s;
+}
+.toggle-slider:before{
+  content:'';position:absolute;width:16px;height:16px;
+  background:var(--muted);border-radius:50%;top:3px;right:3px;transition:.3s;
+}
+.toggle input:checked + .toggle-slider{background:rgba(45,212,191,0.2);border-color:var(--accent)}
+.toggle input:checked + .toggle-slider:before{background:var(--accent);transform:translateX(-20px)}
+
+/* ===== LOADING ===== */
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+.spinner{
+  width:32px;height:32px;border:3px solid var(--border2);border-top-color:var(--accent);
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== TOAST ===== */
+#toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--surface2);border:1px solid var(--border2);border-radius:10px;
+  padding:10px 20px;font-size:13px;z-index:9999;transition:transform .3s;pointer-events:none;
+}
+#toast.show{transform:translateX(-50%) translateY(0)}
+
+/* ===== EMPTY ===== */
+.empty{text-align:center;padding:48px;color:var(--muted);font-size:13px}
+.empty-icon{font-size:36px;margin-bottom:10px}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .stats-row{grid-template-columns:1fr 1fr}
+  .settings-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  nav{overflow-x:auto}
+  main{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">⚙️</div>
+    <div class="login-title">بوستك CMS</div>
+    <div class="login-sub">لوحة تحكم المطور<br>للدخول المصرح به فقط</div>
+    <button class="google-btn" onclick="cmsSignIn()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      ابدأ بـ Google
+    </button>
+    <div id="login-error">❌ غير مصرح لك بالدخول</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <div class="header-logo">⚙️ بوستك <span>CMS</span></div>
+    <div class="header-right">
+      <div class="user-chip">
+        <img id="user-avatar" class="user-avatar" src="" alt="">
+        <span id="user-name" class="user-name"></span>
+      </div>
+      <button class="signout-btn" onclick="cmsSignOut()">خروج</button>
+    </div>
+  </header>
+
+  <nav>
+    <div class="nav-tab active" onclick="showSection('dashboard',this)">📊 لوحة التحكم</div>
+    <div class="nav-tab" onclick="showSection('templates',this)">🎨 التامبلت</div>
+    <div class="nav-tab" onclick="showSection('users',this)">👥 المستخدمين</div>
+    <div class="nav-tab" onclick="showSection('settings',this)">⚙️ الإعدادات</div>
+  </nav>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <div class="section active" id="section-dashboard">
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-num" id="stat-users">—</div><div class="stat-label">إجمالي المستخدمين</div></div>
+        <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-num" id="stat-pro">—</div><div class="stat-label">المشتركين Pro</div></div>
+        <div class="stat-card"><div class="stat-icon">🎨</div><div class="stat-num" id="stat-templates">—</div><div class="stat-label">التامبلت</div></div>
+        <div class="stat-card"><div class="stat-icon">🆓</div><div class="stat-num" id="stat-free-tpls">—</div><div class="stat-label">تامبلت مجانية</div></div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header"><div class="table-title">📋 آخر التامبلت المضافة</div></div>
+        <div id="recent-templates"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- TEMPLATES -->
+    <div class="section" id="section-templates">
+      <div class="form-card">
+        <div class="form-title">📂 رفع تامبلت جديد</div>
+        <label class="upload-label">
+          📂 اسحب ملف .json هنا أو اضغط للرفع
+          <input type="file" accept=".json" style="display:none" onchange="uploadTemplate(this)">
+        </label>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">🎨 كل التامبلت</div>
+          <button class="btn btn-ghost" onclick="loadTemplates()">🔄 تحديث</button>
+        </div>
+        <div id="templates-table"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="section" id="section-users">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">👥 المستخدمين</div>
+          <button class="btn btn-ghost" onclick="loadUsers()">🔄 تحديث</button>
+        </div>
+        <div id="users-table"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="section" id="section-settings">
+      <div class="settings-grid">
+        <div class="setting-card">
+          <div class="setting-title">⏱️ أيام التجربة المجانية</div>
+          <div class="form-group">
+            <label>عدد الأيام</label>
+            <input type="number" id="set-trial-days" value="4" min="0" max="30">
+          </div>
+          <button class="btn btn-accent" onclick="saveSetting('trialDays', document.getElementById('set-trial-days').value)">حفظ</button>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">📢 إشعار للمستخدمين</div>
+          <div class="form-group">
+            <label>نص الإشعار (فارغ = لا إشعار)</label>
+            <input type="text" id="set-notice" placeholder="مثال: نسخة جديدة متاحة!">
+          </div>
+          <button class="btn btn-accent" onclick="saveSetting('notice', document.getElementById('set-notice').value)">حفظ</button>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">🎨 ميزات التطبيق</div>
+          <div class="toggle-row">
+            <span class="toggle-label">تصدير PNG للمجاني</span>
+            <label class="toggle"><input type="checkbox" id="set-free-png" checked onchange="saveSetting('freePng', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">تصدير PDF للمجاني</span>
+            <label class="toggle"><input type="checkbox" id="set-free-pdf" onchange="saveSetting('freePdf', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <span class="toggle-label">Watermark للمجاني</span>
+            <label class="toggle"><input type="checkbox" id="set-watermark" checked onchange="saveSetting('watermark', this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">🏷️ رسالة الترقية</div>
+          <div class="form-group">
+            <label>رسالة تظهر عند محاولة استخدام ميزة Pro</label>
+            <textarea id="set-upgrade-msg" rows="3" placeholder="مثال: هذه الميزة للمشتركين فقط">هذه الميزة حصرية للمشتركين ✨</textarea>
+          </div>
+          <button class="btn btn-accent" onclick="saveSetting('upgradeMsg', document.getElementById('set-upgrade-msg').value)">حفظ</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ===== CONFIG =====
+const FB_CONFIG = {
+  apiKey:"AIzaSyDqooWDkG_XIAI-cTGhLSLmH1UM8xwiFGw",
+  authDomain:"postak-c40e2.firebaseapp.com",
+  projectId:"postak-c40e2",
+  storageBucket:"postak-c40e2.firebasestorage.app",
+  messagingSenderId:"932521380217",
+  appId:"1:932521380217:web:85290565bca1287c2747a8"
+};
+const SB_URL = 'https://uucflrlfyieadihttqbc.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV1Y2ZscmxmeWllYWRpaHR0cWJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAzNjU5NzQsImV4cCI6MjA5NTk0MTk3NH0.akRLTdJgTp2hL3poazCA0aR_1KVevB5z9hjVjjtavTo';
+const ADMIN_EMAIL = 'zoubidy88@gmail.com';
+
+// ===== INIT =====
+firebase.initializeApp(FB_CONFIG);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const sbClient = supabase.createClient(SB_URL, SB_KEY);
+
+// ===== AUTH =====
+function cmsSignIn(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).catch(e => showToast('❌ ' + e.message));
+}
+
+function cmsSignOut(){
+  auth.signOut();
+  sbClient.auth.signOut();
+}
+
+auth.onAuthStateChanged(user => {
+  if(user){
+    if(user.email !== ADMIN_EMAIL){
+      document.getElementById('login-error').style.display = 'block';
+      auth.signOut();
+      return;
+    }
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    document.getElementById('user-name').textContent = user.displayName || user.email;
+    if(user.photoURL) document.getElementById('user-avatar').src = user.photoURL;
+    loadDashboard();
+  } else {
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('app').classList.remove('visible');
+  }
+});
+
+// ===== NAVIGATION =====
+function showSection(id, tab){
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('section-' + id).classList.add('active');
+  tab.classList.add('active');
+  if(id === 'templates') loadTemplates();
+  if(id === 'users') loadUsers();
+  if(id === 'settings') loadSettings();
+}
+
+// ===== TOAST =====
+function showToast(msg, dur=3000){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ===== DASHBOARD =====
+async function loadDashboard(){
+  try{
+    // Templates count
+    const tSnap = await db.collection('templates').get();
+    const allTpls = tSnap.docs.filter(d => d.data().name && d.data().name !== 'placeholder');
+    const freeTpls = allTpls.filter(d => d.data().free !== false);
+    document.getElementById('stat-templates').textContent = allTpls.length;
+    document.getElementById('stat-free-tpls').textContent = freeTpls.length;
+
+    // Users from Supabase
+    const { data: users } = await sbClient.auth.admin?.listUsers() || { data: null };
+    document.getElementById('stat-users').textContent = '—';
+    document.getElementById('stat-pro').textContent = '—';
+
+    // Recent templates table
+    const recent = allTpls.slice(-6).reverse();
+    const wrap = document.getElementById('recent-templates');
+    if(!recent.length){ wrap.innerHTML = '<div class="empty"><div class="empty-icon">🎨</div>لا توجد تامبلت بعد</div>'; return; }
+    wrap.innerHTML = '<table><thead><tr><th>الاسم</th><th>الفئة</th><th>النوع</th><th>الترتيب</th></tr></thead><tbody>'
+      + recent.map(d => {
+          const t = d.data();
+          const isFree = t.free !== false;
+          return '<tr><td>' + (t.previewEmoji||'🎨') + ' ' + (t.name||'—') + '</td>'
+            + '<td>' + (t.category||'—') + '</td>'
+            + '<td><span class="badge ' + (isFree?'badge-free':'badge-pro') + '">' + (isFree?'✅ مجاني':'🔒 مدفوع') + '</span></td>'
+            + '<td>' + (t.order||'—') + '</td></tr>';
+        }).join('')
+      + '</tbody></table>';
+  }catch(e){ showToast('❌ ' + e.message); }
+}
+
+// ===== TEMPLATES =====
+async function loadTemplates(){
+  const wrap = document.getElementById('templates-table');
+  wrap.innerHTML = '<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
+  try{
+    const snap = await db.collection('templates').orderBy('order').get();
+    const docs = snap.docs.filter(d => d.data().name && d.data().name !== 'placeholder');
+    if(!docs.length){ wrap.innerHTML = '<div class="empty"><div class="empty-icon">🎨</div>لا توجد تامبلت</div>'; return; }
+    wrap.innerHTML = '<table><thead><tr><th>الاسم</th><th>الفئة</th><th>الترتيب</th><th>النوع</th><th>إجراءات</th></tr></thead><tbody>'
+      + docs.map(doc => {
+          const t = doc.data();
+          const isFree = t.free !== false;
+          return '<tr>'
+            + '<td>' + (t.previewEmoji||'🎨') + ' <strong>' + (t.name||'—') + '</strong></td>'
+            + '<td>' + (t.category||'—') + '</td>'
+            + '<td><input type="number" value="' + (t.order||0) + '" style="width:60px;padding:4px 8px" onchange="updateOrder(\'' + doc.id + '\',+this.value)"></td>'
+            + '<td><span class="badge ' + (isFree?'badge-free':'badge-pro') + '">' + (isFree?'✅ مجاني':'🔒 مدفوع') + '</span></td>'
+            + '<td style="display:flex;gap:6px;flex-wrap:wrap">'
+            + '<button class="btn btn-purple" onclick="toggleFree(\'' + doc.id + '\',' + isFree + ')">' + (isFree?'🔒 جعله مدفوع':'✅ جعله مجاني') + '</button>'
+            + '<button class="btn btn-danger" onclick="deleteTemplate(\'' + doc.id + '\',\'' + (t.name||'') + '\')">🗑 حذف</button>'
+            + '</td></tr>';
+        }).join('')
+      + '</tbody></table>';
+  }catch(e){ wrap.innerHTML = '<div class="empty" style="color:var(--red)">❌ ' + e.message + '</div>'; }
+}
+
+async function uploadTemplate(input){
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = async e => {
+    try{
+      const parsed = JSON.parse(e.target.result);
+      let jsonData = parsed.data || parsed;
+      const name = parsed.name || f.name.replace('.json','');
+      const emoji = parsed.previewEmoji || '🎨';
+      const bg = parsed.previewBg || 'linear-gradient(135deg,#1a1a2e,#0f3460)';
+      const category = parsed.category || '';
+      const snap = await db.collection('templates').orderBy('order','desc').limit(1).get();
+      const lastOrder = snap.empty ? 0 : (snap.docs[0].data().order || 0);
+      await db.collection('templates').add({name, previewEmoji:emoji, previewBg:bg, category, order:lastOrder+1, free:true, json:JSON.stringify(jsonData)});
+      showToast('✅ تم رفع: ' + name);
+      loadTemplates();
+      loadDashboard();
+    }catch(err){ showToast('❌ ' + err.message); }
+  };
+  r.readAsText(f);
+  input.value = '';
+}
+
+async function toggleFree(docId, currentlyFree){
+  try{
+    await db.collection('templates').doc(docId).update({free: !currentlyFree});
+    showToast(!currentlyFree ? '✅ صار مجاني' : '🔒 صار مدفوع');
+    loadTemplates();
+  }catch(e){ showToast('❌ ' + e.message); }
+}
+
+async function updateOrder(docId, newOrder){
+  try{
+    await db.collection('templates').doc(docId).update({order: newOrder});
+    showToast('✅ تم تحديث الترتيب');
+  }catch(e){ showToast('❌ ' + e.message); }
+}
+
+async function deleteTemplate(docId, name){
+  if(!confirm('حذف "' + name + '"؟')) return;
+  try{
+    await db.collection('templates').doc(docId).delete();
+    showToast('🗑 تم حذف: ' + name);
+    loadTemplates();
+    loadDashboard();
+  }catch(e){ showToast('❌ ' + e.message); }
+}
+
+// ===== USERS =====
+async function loadUsers(){
+  const wrap = document.getElementById('users-table');
+  wrap.innerHTML = '<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
+  try{
+    // من Firestore - جدول users
+    const snap = await db.collection('users').orderBy('createdAt','desc').limit(100).get();
+    if(snap.empty){
+      wrap.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>لا توجد بيانات مستخدمين<br><small style="color:var(--muted)">يتم تسجيل المستخدمين تلقائياً عند أول دخول</small></div>';
+      return;
+    }
+    document.getElementById('stat-users').textContent = snap.size;
+    const proCount = snap.docs.filter(d => d.data().isPro).length;
+    document.getElementById('stat-pro').textContent = proCount;
+
+    wrap.innerHTML = '<table><thead><tr><th>المستخدم</th><th>الإيميل</th><th>تاريخ التسجيل</th><th>الحساب</th><th>إجراءات</th></tr></thead><tbody>'
+      + snap.docs.map(doc => {
+          const u = doc.data();
+          const isPro = u.isPro || false;
+          const date = u.createdAt ? new Date(u.createdAt.seconds*1000).toLocaleDateString('ar-IQ') : '—';
+          return '<tr>'
+            + '<td>' + (u.name || u.email?.split('@')[0] || '—') + '</td>'
+            + '<td style="direction:ltr;text-align:right;color:var(--muted)">' + (u.email||'—') + '</td>'
+            + '<td>' + date + '</td>'
+            + '<td><span class="badge ' + (isPro?'badge-pro':'badge-inactive') + '">' + (isPro?'💎 Pro':'🆓 مجاني') + '</span></td>'
+            + '<td><button class="btn ' + (isPro?'btn-ghost':'btn-purple') + '" onclick="togglePro(\'' + doc.id + '\',' + isPro + ',\'' + (u.email||'') + '\')">' + (isPro?'↩ إلغاء Pro':'💎 منح Pro') + '</button></td>'
+            + '</tr>';
+        }).join('')
+      + '</tbody></table>';
+  }catch(e){
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">👥</div><div style="color:var(--muted)">لم يتم إعداد جدول المستخدمين بعد</div><br><small style="color:var(--muted);font-size:11px">أنشئ collection "users" في Firestore</small></div>';
+  }
+}
+
+async function togglePro(docId, currentlyPro, email){
+  try{
+    await db.collection('users').doc(docId).update({isPro: !currentlyPro});
+    showToast(!currentlyPro ? '💎 تم منح Pro لـ ' + email : '↩ تم إلغاء Pro');
+    loadUsers();
+  }catch(e){ showToast('❌ ' + e.message); }
+}
+
+// ===== SETTINGS =====
+async function loadSettings(){
+  try{
+    const doc = await db.collection('settings').doc('app').get();
+    if(doc.exists){
+      const s = doc.data();
+      if(s.trialDays !== undefined) document.getElementById('set-trial-days').value = s.trialDays;
+      if(s.notice !== undefined) document.getElementById('set-notice').value = s.notice;
+      if(s.freePng !== undefined) document.getElementById('set-free-png').checked = s.freePng;
+      if(s.freePdf !== undefined) document.getElementById('set-free-pdf').checked = s.freePdf;
+      if(s.watermark !== undefined) document.getElementById('set-watermark').checked = s.watermark;
+      if(s.upgradeMsg !== undefined) document.getElementById('set-upgrade-msg').value = s.upgradeMsg;
+    }
+  }catch(e){ console.warn('Settings load error:', e.message); }
+}
+
+async function saveSetting(key, value){
+  try{
+    await db.collection('settings').doc('app').set({[key]: value}, {merge: true});
+    showToast('✅ تم حفظ الإعداد');
+  }catch(e){ showToast('❌ ' + e.message); }
+}
+</script>
+</body>
+</html>
