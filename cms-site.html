@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>بوستك — CMS الموقع</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#080810;--surface:#0f0f1a;--surface2:#16162a;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);--text:#f0f0f8;--muted:#6b7280;--accent:#2dd4bf;--accent2:#a78bfa;--red:#f87171;--green:#4ade80;--yellow:#fbbf24}
+body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
+#login-screen{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center}
+.login-card{background:var(--surface);border:1px solid var(--border2);border-radius:20px;padding:40px 32px;width:320px;display:flex;flex-direction:column;align-items:center;gap:20px}
+.login-title{font-size:20px;font-weight:900;color:var(--text)}
+.google-btn{width:100%;background:#fff;border:none;border-radius:12px;padding:13px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14px;font-weight:700;color:#1a1a2e;cursor:pointer;font-family:'Cairo',sans-serif;transition:all .2s}
+.google-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,0,0,0.3)}
+.google-btn svg{width:20px;height:20px;flex-shrink:0}
+#login-error{font-size:12px;color:var(--red);text-align:center;display:none}
+#app{display:none;min-height:100vh;flex-direction:column}
+#app.visible{display:flex}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:58px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100}
+.header-logo{font-size:16px;font-weight:900;color:var(--accent)}
+.header-right{margin-right:auto;display:flex;align-items:center;gap:12px}
+.back-btn{color:var(--muted);font-size:12px;text-decoration:none;background:var(--surface2);border:1px solid var(--border);padding:5px 12px;border-radius:8px;transition:all .2s}
+.back-btn:hover{border-color:var(--accent);color:var(--accent)}
+.signout-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 12px;border-radius:8px;cursor:pointer;font-size:12px;font-family:'Cairo',sans-serif;transition:all .2s}
+.signout-btn:hover{border-color:var(--red);color:var(--red)}
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;overflow-x:auto}
+.nav-tab{padding:14px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:'Cairo',sans-serif;white-space:nowrap}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+main{flex:1;padding:24px;max-width:1100px;width:100%;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:20px}
+.card-title{font-size:14px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;color:var(--muted)}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;font-family:'Cairo',sans-serif;width:100%;outline:none;transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:80px}
+.btn{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-family:'Cairo',sans-serif;font-weight:600;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+.btn-accent{background:var(--accent);color:#0d0d14}.btn-accent:hover{opacity:.85}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.btn-ghost:hover{border-color:var(--border2)}
+.btn-danger{background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.2)}.btn-danger:hover{background:rgba(239,68,68,0.2)}
+.btn-purple{background:rgba(167,139,250,0.1);color:var(--accent2);border:1px solid rgba(167,139,250,0.2)}.btn-purple:hover{background:rgba(167,139,250,0.2)}
+.btn-green{background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.2)}.btn-green:hover{background:rgba(74,222,128,0.2)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:20px}
+.table-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.table-title{font-size:14px;font-weight:700}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:right;font-size:11px;font-weight:600;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)}
+td{padding:12px 16px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-on{background:rgba(74,222,128,0.1);color:var(--green);border:1px solid rgba(74,222,128,0.2)}
+.badge-off{background:rgba(107,114,128,0.1);color:var(--muted);border:1px solid var(--border)}
+.badge-url{background:rgba(45,212,191,0.1);color:var(--accent);border:1px solid rgba(45,212,191,0.2)}
+.badge-file{background:rgba(167,139,250,0.1);color:var(--accent2);border:1px solid rgba(167,139,250,0.2)}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+.spinner{width:28px;height:28px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:40px;color:var(--muted);font-size:13px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface2);border:1px solid var(--border2);border-radius:10px;padding:10px 20px;font-size:13px;z-index:9999;transition:transform .3s;pointer-events:none}
+#toast.show{transform:translateX(-50%) translateY(0)}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.toggle-row:last-child{border-bottom:none}
+.toggle-label{font-size:13px}
+.toggle-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.toggle{position:relative;width:44px;height:24px;cursor:pointer;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--surface2);border-radius:12px;border:1px solid var(--border2);transition:.3s}
+.toggle-slider:before{content:'';position:absolute;width:16px;height:16px;background:var(--muted);border-radius:50%;top:3px;right:3px;transition:.3s}
+.toggle input:checked + .toggle-slider{background:rgba(45,212,191,0.2);border-color:var(--accent)}
+.toggle input:checked + .toggle-slider:before{background:var(--accent);transform:translateX(-20px)}
+.upload-area{border:2px dashed var(--border2);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;font-size:13px;color:var(--muted)}
+.upload-area:hover{border-color:var(--accent);color:var(--accent)}
+.video-thumb{width:80px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--border)}
+.video-icon{width:80px;height:56px;background:var(--surface2);border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px}
+@media(max-width:768px){.form-row{grid-template-columns:1fr}main{padding:16px}nav{overflow-x:auto}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-title">🌐 بوستك — CMS الموقع</div>
+    <button class="google-btn" onclick="cmsSignIn()">
+      <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      ابدأ بـ Google
+    </button>
+    <div id="login-error">❌ غير مصرح لك بالدخول</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <header>
+    <a href="cms-login.html" class="back-btn">← رجوع</a>
+    <div class="header-logo">🌐 CMS الموقع</div>
+    <div class="header-right">
+      <button class="signout-btn" onclick="cmsSignOut()">خروج</button>
+    </div>
+  </header>
+  <nav>
+    <div class="nav-tab active" onclick="showSection('videos',this)">🎬 الفيديوات</div>
+    <div class="nav-tab" onclick="showSection('pages',this)">📄 الصفحات</div>
+    <div class="nav-tab" onclick="showSection('content',this)">✏️ المحتوى</div>
+    <div class="nav-tab" onclick="showSection('library',this)">🖼 المكتبة</div>
+  </nav>
+  <main>
+
+    <!-- VIDEOS -->
+    <div class="section active" id="section-videos">
+      <div class="card">
+        <div class="card-title">🎬 إضافة فيديو تعليمي</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>عنوان الفيديو *</label>
+            <input type="text" id="v-title" placeholder="مثال: كيف تصمم بوست منتج">
+          </div>
+          <div class="form-group">
+            <label>الفئة</label>
+            <select id="v-cat">
+              <option value="beginner">مبتدئ</option>
+              <option value="advanced">متقدم</option>
+              <option value="tips">نصائح</option>
+              <option value="templates">قوالب</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>وصف الفيديو</label>
+          <textarea id="v-desc" placeholder="وصف مختصر للفيديو..."></textarea>
+        </div>
+        <!-- نوع الفيديو -->
+        <div class="form-group" style="margin-bottom:12px">
+          <label>نوع الفيديو</label>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="btn btn-accent" id="vtype-url-btn" onclick="setVType('url')">🔗 رابط YouTube/Vimeo</button>
+            <button class="btn btn-ghost" id="vtype-file-btn" onclick="setVType('file')">📁 رفع ملف</button>
+          </div>
+        </div>
+        <div id="vtype-url" class="form-group" style="margin-bottom:12px">
+          <label>رابط الفيديو</label>
+          <input type="url" id="v-url" placeholder="https://youtube.com/watch?v=...">
+        </div>
+        <div id="vtype-file" style="display:none;margin-bottom:12px">
+          <label style="font-size:12px;color:var(--muted);display:block;margin-bottom:6px">رفع ملف فيديو</label>
+          <label class="upload-area">
+            📁 اضغط لرفع فيديو (MP4, WebM — max 100MB)
+            <input type="file" id="v-file" accept="video/*" style="display:none" onchange="previewVideo(this)">
+          </label>
+          <div id="v-file-preview" style="display:none;margin-top:8px;font-size:12px;color:var(--accent)"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>صورة مصغرة (Thumbnail) — اختياري</label>
+          <label class="upload-area" style="padding:12px">
+            🖼 رفع صورة مصغرة (JPG/PNG)
+            <input type="file" id="v-thumb" accept="image/*" style="display:none" onchange="previewThumb(this)">
+          </label>
+          <div id="v-thumb-preview" style="display:none;margin-top:8px"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn btn-accent" onclick="addVideo()">✅ إضافة الفيديو</button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="v-active" checked style="width:auto"> مفعّل مباشرة
+          </label>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">📋 كل الفيديوات</div>
+          <button class="btn btn-ghost" onclick="loadVideos()">🔄 تحديث</button>
+        </div>
+        <div id="videos-table"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- PAGES -->
+    <div class="section" id="section-pages">
+      <div class="card">
+        <div class="card-title">📄 إضافة صفحة جديدة</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>اسم الصفحة *</label>
+            <input type="text" id="pg-title" placeholder="مثال: عن بوستك">
+          </div>
+          <div class="form-group">
+            <label>الرابط (Slug) *</label>
+            <input type="text" id="pg-slug" placeholder="مثال: about" style="direction:ltr">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>المحتوى (HTML أو نص)</label>
+          <textarea id="pg-content" style="min-height:140px" placeholder="محتوى الصفحة..."></textarea>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <button class="btn btn-accent" onclick="addPage()">✅ إضافة الصفحة</button>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="pg-active" checked style="width:auto"> مفعّلة مباشرة
+          </label>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">📋 كل الصفحات</div>
+          <button class="btn btn-ghost" onclick="loadPages()">🔄 تحديث</button>
+        </div>
+        <div id="pages-table"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="section" id="section-content">
+      <div class="card">
+        <div class="card-title">✏️ محتوى الموقع الرئيسي</div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>العنوان الرئيسي (Hero)</label>
+          <input type="text" id="c-hero-title" placeholder="صمّم بوستاتك في ثواني">
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>النص التعريفي</label>
+          <textarea id="c-hero-sub" placeholder="وصف التطبيق في سطرين..."></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>نص زر CTA الرئيسي</label>
+          <input type="text" id="c-cta-text" placeholder="ابدأ مجاناً">
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>إشعار عام (يظهر في أعلى الموقع — فارغ = لا يظهر)</label>
+          <input type="text" id="c-notice" placeholder="مثال: 🎉 إطلاق الإصدار الجديد!">
+        </div>
+        <button class="btn btn-accent" onclick="saveContent()">💾 حفظ المحتوى</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📊 إعدادات الموقع</div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">تفعيل الموقع</div><div class="toggle-desc">إيقاف الموقع مؤقتاً للصيانة</div></div>
+          <label class="toggle"><input type="checkbox" id="s-site-on" checked onchange="saveSiteSetting('siteEnabled',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">قسم الفيديوات</div><div class="toggle-desc">إظهار/إخفاء قسم الفيديوات في الموقع</div></div>
+          <label class="toggle"><input type="checkbox" id="s-videos-on" checked onchange="saveSiteSetting('showVideos',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">قسم المجتمع</div><div class="toggle-desc">إظهار/إخفاء قسم المجتمع</div></div>
+          <label class="toggle"><input type="checkbox" id="s-community-on" checked onchange="saveSiteSetting('showCommunity',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div><div class="toggle-label">زر تثبيت الموبايل</div><div class="toggle-desc">إظهار/إخفاء قسم تثبيت التطبيق</div></div>
+          <label class="toggle"><input type="checkbox" id="s-install-on" checked onchange="saveSiteSetting('showInstall',this.checked)"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIBRARY -->
+    <div class="section" id="section-library">
+      <div class="card">
+        <div class="card-title">🖼 إضافة صورة للمكتبة</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>اسم الصورة *</label>
+            <input type="text" id="lib-title" placeholder="مثال: بوست منتج عطور">
+          </div>
+          <div class="form-group">
+            <label>الفئة</label>
+            <select id="lib-cat">
+              <option value="product">منتجات</option>
+              <option value="food">مطاعم وأكل</option>
+              <option value="fashion">أزياء</option>
+              <option value="health">صحة وجمال</option>
+              <option value="sport">رياضة</option>
+              <option value="other">أخرى</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px">
+          <label>رفع الصورة *</label>
+          <label class="upload-area">
+            🖼 اضغط لرفع صورة (JPG/PNG/WebP)
+            <input type="file" id="lib-file" accept="image/*" style="display:none" onchange="previewLib(this)">
+          </label>
+          <div id="lib-preview" style="display:none;margin-top:8px"></div>
+        </div>
+        <button class="btn btn-accent" onclick="addLibItem()">✅ إضافة للمكتبة</button>
+      </div>
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">📋 المكتبة</div>
+          <button class="btn btn-ghost" onclick="loadLibrary()">🔄 تحديث</button>
+        </div>
+        <div id="library-table"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===== CONFIG =====
+const FB_CONFIG = {apiKey:"AIzaSyDqooWDkG_XIAI-cTGhLSLmH1UM8xwiFGw",authDomain:"postak-c40e2.firebaseapp.com",projectId:"postak-c40e2",storageBucket:"postak-c40e2.firebasestorage.app",messagingSenderId:"932521380217",appId:"1:932521380217:web:85290565bca1287c2747a8"};
+const ADMIN_EMAIL = 'zoubidy88@gmail.com';
+firebase.initializeApp(FB_CONFIG);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const storage = firebase.storage();
+
+// ===== AUTH =====
+function cmsSignIn(){ auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>showToast('❌ '+e.message)); }
+function cmsSignOut(){ auth.signOut(); }
+auth.onAuthStateChanged(user=>{
+  if(user){
+    if(user.email!==ADMIN_EMAIL){ document.getElementById('login-error').style.display='block'; auth.signOut(); return; }
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').classList.add('visible');
+    loadVideos(); loadPages(); loadContent(); loadLibrary();
+  } else {
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app').classList.remove('visible');
+  }
+});
+
+// ===== UTILS =====
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
+function showSection(id,tabEl){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('section-'+id).classList.add('active');
+  tabEl.classList.add('active');
+}
+
+// ===== VIDEO TYPE =====
+let _vtype = 'url';
+function setVType(t){
+  _vtype = t;
+  document.getElementById('vtype-url').style.display = t==='url'?'block':'none';
+  document.getElementById('vtype-file').style.display = t==='file'?'block':'none';
+  document.getElementById('vtype-url-btn').className = t==='url'?'btn btn-accent':'btn btn-ghost';
+  document.getElementById('vtype-file-btn').className = t==='file'?'btn btn-accent':'btn btn-ghost';
+}
+function previewVideo(input){
+  const f=input.files[0]; if(!f) return;
+  document.getElementById('v-file-preview').style.display='block';
+  document.getElementById('v-file-preview').textContent='✅ '+f.name+' ('+Math.round(f.size/1024/1024,1)+' MB)';
+}
+function previewThumb(input){
+  const f=input.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=e=>{ const p=document.getElementById('v-thumb-preview'); p.style.display='block'; p.innerHTML='<img src="'+e.target.result+'" style="width:120px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">'; };
+  reader.readAsDataURL(f);
+}
+function previewLib(input){
+  const f=input.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=e=>{ const p=document.getElementById('lib-preview'); p.style.display='block'; p.innerHTML='<img src="'+e.target.result+'" style="width:120px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border)">'; };
+  reader.readAsDataURL(f);
+}
+
+// ===== UPLOAD FILE TO STORAGE =====
+async function uploadFile(file, path){
+  const ref = storage.ref(path);
+  await ref.put(file);
+  return await ref.getDownloadURL();
+}
+
+// ===== VIDEOS =====
+async function addVideo(){
+  const title = document.getElementById('v-title').value.trim();
+  if(!title){ showToast('❌ أدخل عنوان الفيديو'); return; }
+  let videoUrl = '';
+  let videoType = _vtype;
+  try{
+    if(_vtype==='url'){
+      videoUrl = document.getElementById('v-url').value.trim();
+      if(!videoUrl){ showToast('❌ أدخل رابط الفيديو'); return; }
+    } else {
+      const file = document.getElementById('v-file').files[0];
+      if(!file){ showToast('❌ اختر ملف فيديو'); return; }
+      showToast('⏳ جاري الرفع...');
+      videoUrl = await uploadFile(file, 'videos/'+Date.now()+'_'+file.name);
+    }
+    let thumbUrl = '';
+    const thumbFile = document.getElementById('v-thumb').files[0];
+    if(thumbFile) thumbUrl = await uploadFile(thumbFile, 'thumbs/'+Date.now()+'_'+thumbFile.name);
+    const snap = await db.collection('site_videos').orderBy('order','desc').limit(1).get();
+    const lastOrder = snap.empty ? 0 : (snap.docs[0].data().order||0);
+    await db.collection('site_videos').add({
+      title, desc:document.getElementById('v-desc').value.trim(),
+      category:document.getElementById('v-cat').value,
+      url:videoUrl, type:videoType, thumb:thumbUrl,
+      active:document.getElementById('v-active').checked,
+      order:lastOrder+1, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('✅ تم إضافة الفيديو');
+    document.getElementById('v-title').value=''; document.getElementById('v-url').value=''; document.getElementById('v-desc').value='';
+    document.getElementById('v-thumb-preview').style.display='none'; document.getElementById('v-file-preview').style.display='none';
+    loadVideos();
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function loadVideos(){
+  const wrap = document.getElementById('videos-table');
+  wrap.innerHTML='<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
+  try{
+    const snap = await db.collection('site_videos').orderBy('order','desc').get();
+    if(snap.empty){ wrap.innerHTML='<div class="empty">لا توجد فيديوات بعد</div>'; return; }
+    wrap.innerHTML='<table><thead><tr><th>الفيديو</th><th>العنوان</th><th>الفئة</th><th>النوع</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>'
+      +snap.docs.map(doc=>{
+        const v=doc.data();
+        const thumb = v.thumb ? '<img src="'+v.thumb+'" class="video-thumb">' : '<div class="video-icon">🎬</div>';
+        return '<tr><td>'+thumb+'</td>'
+          +'<td style="max-width:200px"><div style="font-weight:600">'+v.title+'</div><div style="font-size:11px;color:var(--muted);margin-top:2px">'+( v.desc?.substring(0,50)||'')+( v.desc?.length>50?'...':'' )+'</div></td>'
+          +'<td><span style="font-size:12px;color:var(--muted)">'+( {beginner:'مبتدئ',advanced:'متقدم',tips:'نصائح',templates:'قوالب'}[v.category]||v.category )+'</span></td>'
+          +'<td><span class="badge '+(v.type==='url'?'badge-url':'badge-file')+'">'+(v.type==='url'?'🔗 رابط':'📁 ملف')+'</span></td>'
+          +'<td><span class="badge '+(v.active?'badge-on':'badge-off')+'">'+(v.active?'✅ مفعّل':'⏸ موقوف')+'</span></td>'
+          +'<td style="display:flex;gap:6px;flex-wrap:wrap">'
+          +'<button class="btn btn-ghost" style="font-size:11px" onclick="toggleVideo(\''+doc.id+'\','+v.active+')">'+(v.active?'إيقاف':'تفعيل')+'</button>'
+          +'<button class="btn btn-danger" style="font-size:11px" onclick="deleteVideo(\''+doc.id+'\',\''+v.title+'\')">🗑 حذف</button>'
+          +'</td></tr>';
+      }).join('')+'</tbody></table>';
+  }catch(e){ wrap.innerHTML='<div class="empty" style="color:var(--red)">❌ '+e.message+'</div>'; }
+}
+
+async function toggleVideo(id, active){
+  await db.collection('site_videos').doc(id).update({active:!active});
+  showToast(!active?'✅ تم تفعيل الفيديو':'⏸ تم إيقاف الفيديو');
+  loadVideos();
+}
+async function deleteVideo(id, title){
+  if(!confirm('حذف "'+title+'"؟')) return;
+  await db.collection('site_videos').doc(id).delete();
+  showToast('🗑 تم حذف الفيديو'); loadVideos();
+}
+
+// ===== PAGES =====
+async function addPage(){
+  const title = document.getElementById('pg-title').value.trim();
+  const slug = document.getElementById('pg-slug').value.trim().replace(/[^a-z0-9-]/g,'');
+  if(!title||!slug){ showToast('❌ أدخل الاسم والرابط'); return; }
+  try{
+    await db.collection('site_pages').doc(slug).set({
+      title, slug, content:document.getElementById('pg-content').value.trim(),
+      active:document.getElementById('pg-active').checked,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('✅ تم إضافة الصفحة');
+    document.getElementById('pg-title').value=''; document.getElementById('pg-slug').value=''; document.getElementById('pg-content').value='';
+    loadPages();
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function loadPages(){
+  const wrap = document.getElementById('pages-table');
+  wrap.innerHTML='<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
+  try{
+    const snap = await db.collection('site_pages').orderBy('createdAt','desc').get();
+    if(snap.empty){ wrap.innerHTML='<div class="empty">لا توجد صفحات بعد</div>'; return; }
+    wrap.innerHTML='<table><thead><tr><th>اسم الصفحة</th><th>الرابط</th><th>الحالة</th><th>إجراءات</th></tr></thead><tbody>'
+      +snap.docs.map(doc=>{
+        const p=doc.data();
+        return '<tr><td style="font-weight:600">'+p.title+'</td>'
+          +'<td><code style="font-size:11px;color:var(--accent);direction:ltr">/'+p.slug+'</code></td>'
+          +'<td><span class="badge '+(p.active?'badge-on':'badge-off')+'">'+(p.active?'✅ مفعّلة':'⏸ موقوفة')+'</span></td>'
+          +'<td style="display:flex;gap:6px">'
+          +'<button class="btn btn-ghost" style="font-size:11px" onclick="togglePage(\''+doc.id+'\','+p.active+')">'+(p.active?'إيقاف':'تفعيل')+'</button>'
+          +'<button class="btn btn-purple" style="font-size:11px" onclick="editPage(\''+doc.id+'\')">✏️ تعديل</button>'
+          +'<button class="btn btn-danger" style="font-size:11px" onclick="deletePage(\''+doc.id+'\',\''+p.title+'\')">🗑 حذف</button>'
+          +'</td></tr>';
+      }).join('')+'</tbody></table>';
+  }catch(e){ wrap.innerHTML='<div class="empty" style="color:var(--red)">❌ '+e.message+'</div>'; }
+}
+
+async function togglePage(id, active){
+  await db.collection('site_pages').doc(id).update({active:!active});
+  showToast(!active?'✅ تم تفعيل الصفحة':'⏸ تم إيقاف الصفحة');
+  loadPages();
+}
+async function deletePage(id, title){
+  if(!confirm('حذف "'+title+'"؟')) return;
+  await db.collection('site_pages').doc(id).delete();
+  showToast('🗑 تم حذف الصفحة'); loadPages();
+}
+async function editPage(id){
+  const doc = await db.collection('site_pages').doc(id).get();
+  const p = doc.data();
+  document.getElementById('pg-title').value = p.title;
+  document.getElementById('pg-slug').value = p.slug;
+  document.getElementById('pg-content').value = p.content||'';
+  showToast('✏️ عدّل وأضف من جديد');
+}
+
+// ===== CONTENT =====
+async function loadContent(){
+  try{
+    const doc = await db.collection('site_settings').doc('content').get();
+    if(!doc.exists) return;
+    const c = doc.data();
+    if(c.heroTitle) document.getElementById('c-hero-title').value = c.heroTitle;
+    if(c.heroSub) document.getElementById('c-hero-sub').value = c.heroSub;
+    if(c.ctaText) document.getElementById('c-cta-text').value = c.ctaText;
+    if(c.notice!==undefined) document.getElementById('c-notice').value = c.notice;
+    if(c.siteEnabled!==undefined) document.getElementById('s-site-on').checked = c.siteEnabled;
+    if(c.showVideos!==undefined) document.getElementById('s-videos-on').checked = c.showVideos;
+    if(c.showCommunity!==undefined) document.getElementById('s-community-on').checked = c.showCommunity;
+    if(c.showInstall!==undefined) document.getElementById('s-install-on').checked = c.showInstall;
+  }catch(e){ console.warn(e.message); }
+}
+
+async function saveContent(){
+  try{
+    await db.collection('site_settings').doc('content').set({
+      heroTitle:document.getElementById('c-hero-title').value,
+      heroSub:document.getElementById('c-hero-sub').value,
+      ctaText:document.getElementById('c-cta-text').value,
+      notice:document.getElementById('c-notice').value,
+    },{merge:true});
+    showToast('✅ تم حفظ المحتوى');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function saveSiteSetting(key, val){
+  try{
+    await db.collection('site_settings').doc('content').set({[key]:val},{merge:true});
+    showToast('✅ تم الحفظ');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+// ===== LIBRARY =====
+async function addLibItem(){
+  const title = document.getElementById('lib-title').value.trim();
+  const file = document.getElementById('lib-file').files[0];
+  if(!title||!file){ showToast('❌ أدخل الاسم والصورة'); return; }
+  try{
+    showToast('⏳ جاري الرفع...');
+    const url = await uploadFile(file, 'library/'+Date.now()+'_'+file.name);
+    const snap = await db.collection('site_library').orderBy('order','desc').limit(1).get();
+    const lastOrder = snap.empty ? 0 : (snap.docs[0].data().order||0);
+    await db.collection('site_library').add({
+      title, category:document.getElementById('lib-cat').value,
+      url, order:lastOrder+1,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('✅ تم إضافة الصورة');
+    document.getElementById('lib-title').value=''; document.getElementById('lib-preview').style.display='none';
+    loadLibrary();
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function loadLibrary(){
+  const wrap = document.getElementById('library-table');
+  wrap.innerHTML='<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
+  try{
+    const snap = await db.collection('site_library').orderBy('order','desc').get();
+    if(snap.empty){ wrap.innerHTML='<div class="empty">لا توجد صور في المكتبة بعد</div>'; return; }
+    wrap.innerHTML='<table><thead><tr><th>الصورة</th><th>الاسم</th><th>الفئة</th><th>إجراءات</th></tr></thead><tbody>'
+      +snap.docs.map(doc=>{
+        const l=doc.data();
+        return '<tr><td><img src="'+l.url+'" style="width:60px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border)"></td>'
+          +'<td style="font-weight:600">'+l.title+'</td>'
+          +'<td style="font-size:12px;color:var(--muted)">'+( {product:'منتجات',food:'مطاعم',fashion:'أزياء',health:'صحة',sport:'رياضة',other:'أخرى'}[l.category]||l.category )+'</td>'
+          +'<td><button class="btn btn-danger" style="font-size:11px" onclick="deleteLibItem(\''+doc.id+'\',\''+l.title+'\')">🗑 حذف</button></td></tr>';
+      }).join('')+'</tbody></table>';
+  }catch(e){ wrap.innerHTML='<div class="empty" style="color:var(--red)">❌ '+e.message+'</div>'; }
+}
+
+async function deleteLibItem(id, title){
+  if(!confirm('حذف "'+title+'"؟')) return;
+  await db.collection('site_library').doc(id).delete();
+  showToast('🗑 تم الحذف'); loadLibrary();
+}
+</script>
+</body>
+</html>
