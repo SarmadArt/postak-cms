@@ -597,6 +597,11 @@ select option{background:var(--surface2)}
             <input type="text" id="set-onboard-website-label" placeholder="postak.vercel.app">
           </div>
           <div class="form-group">
+            <label>🎬 رابط Lottie تثبيت iOS (JSON)</label>
+            <input type="text" id="set-ios-lottie-url" placeholder="https://...supabase.co/.../How to Install in Safari.json">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">يظهر في popup التثبيت على iPhone — ارفعه على Supabase Storage</div>
+          </div>
+          <div class="form-group">
             <label>عدد مرات الظهور</label>
             <select id="set-onboard-shows">
               <option value="1">مرة واحدة</option>
@@ -856,6 +861,7 @@ async function loadSettings(){
       if(s.onboardingTutorialLabel) document.getElementById('set-onboard-tutorial-label').value=s.onboardingTutorialLabel;
       if(s.onboardingWebsiteUrl) document.getElementById('set-onboard-website-url').value=s.onboardingWebsiteUrl;
       if(s.onboardingWebsiteLabel) document.getElementById('set-onboard-website-label').value=s.onboardingWebsiteLabel;
+      if(s.iosLottieUrl) document.getElementById('set-ios-lottie-url').value=s.iosLottieUrl;
       if(s.onboardingShows) document.getElementById('set-onboard-shows').value=s.onboardingShows;
       if(s.trialDays !== undefined) document.getElementById('set-trial-days').value = s.trialDays;
       if(s.notice !== undefined) document.getElementById('set-notice').value = s.notice;
@@ -911,6 +917,7 @@ async function saveOnboardingSettings(){
       onboardingTutorialLabel: document.getElementById('set-onboard-tutorial-label').value,
       onboardingWebsiteUrl: document.getElementById('set-onboard-website-url').value,
       onboardingWebsiteLabel: document.getElementById('set-onboard-website-label').value,
+      iosLottieUrl: document.getElementById('set-ios-lottie-url').value,
       onboardingShows: document.getElementById('set-onboard-shows').value,
     }, {merge:true});
     showToast('✅ تم حفظ إعدادات الترحيب');
