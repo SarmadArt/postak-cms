@@ -258,6 +258,7 @@ select option{background:var(--surface2)}
     <div class="nav-tab" onclick="showSection('users',this)">👥 المستخدمين</div>
     <div class="nav-tab" onclick="showSection('limits',this)">🔒 حدود الخطط</div>
     <div class="nav-tab" onclick="showSection('watermark',this)">💧 Watermark</div>
+    <div class="nav-tab" onclick="showSection('feedback',this)">💬 الملاحظات</div>
     <div class="nav-tab" onclick="showSection('beta',this)">🚀 وضع Beta</div>
     <div class="nav-tab" onclick="showSection('settings',this)">⚙️ الإعدادات</div>
   </nav>
@@ -444,6 +445,17 @@ select option{background:var(--surface2)}
       </div>
     </div>
 
+    <!-- FEEDBACK SECTION -->
+    <div class="section" id="section-feedback">
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">💬 ملاحظات واقتراحات المستخدمين</div>
+          <button class="btn btn-ghost" onclick="loadFeedback()" style="font-size:12px">🔄 تحديث</button>
+        </div>
+        <div id="feedback-table"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+    </div>
+
     <!-- BETA MODE SECTION -->
     <div class="section" id="section-beta">
       <div class="settings-grid">
@@ -569,8 +581,16 @@ select option{background:var(--surface2)}
             <input type="text" id="set-onboard-tutorial-url" placeholder="https://youtube.com/...">
           </div>
           <div class="form-group">
+            <label>نص الفيديوهات (يظهر تحت الرابط)</label>
+            <input type="text" id="set-onboard-tutorial-label" placeholder="تعلم كيف تستخدم بوستك">
+          </div>
+          <div class="form-group">
             <label>رابط الموقع</label>
             <input type="text" id="set-onboard-website-url" placeholder="https://postak.vercel.app">
+          </div>
+          <div class="form-group">
+            <label>نص الموقع (يظهر تحت الرابط)</label>
+            <input type="text" id="set-onboard-website-label" placeholder="postak.vercel.app">
           </div>
           <div class="form-group">
             <label>عدد مرات الظهور</label>
@@ -658,7 +678,7 @@ function showSection(id, tab){
   if(id === 'settings') loadSettings();
   if(id === 'limits') loadLimits();
   if(id === 'watermark') loadWatermarkSettings();
-  if(id === 'beta') loadBetaSection();
+  if(id === 'feedback') loadFeedback();
 }
 
 // ===== TOAST =====
@@ -825,7 +845,9 @@ async function loadSettings(){
       if(s.onboardingTitle) document.getElementById('set-onboard-title').value=s.onboardingTitle;
       if(s.onboardingSubtitle) document.getElementById('set-onboard-subtitle').value=s.onboardingSubtitle;
       if(s.onboardingTutorialUrl) document.getElementById('set-onboard-tutorial-url').value=s.onboardingTutorialUrl;
+      if(s.onboardingTutorialLabel) document.getElementById('set-onboard-tutorial-label').value=s.onboardingTutorialLabel;
       if(s.onboardingWebsiteUrl) document.getElementById('set-onboard-website-url').value=s.onboardingWebsiteUrl;
+      if(s.onboardingWebsiteLabel) document.getElementById('set-onboard-website-label').value=s.onboardingWebsiteLabel;
       if(s.onboardingShows) document.getElementById('set-onboard-shows').value=s.onboardingShows;
       if(s.trialDays !== undefined) document.getElementById('set-trial-days').value = s.trialDays;
       if(s.notice !== undefined) document.getElementById('set-notice').value = s.notice;
@@ -862,7 +884,9 @@ async function saveOnboardingSettings(){
       onboardingTitle: document.getElementById('set-onboard-title').value,
       onboardingSubtitle: document.getElementById('set-onboard-subtitle').value,
       onboardingTutorialUrl: document.getElementById('set-onboard-tutorial-url').value,
+      onboardingTutorialLabel: document.getElementById('set-onboard-tutorial-label').value,
       onboardingWebsiteUrl: document.getElementById('set-onboard-website-url').value,
+      onboardingWebsiteLabel: document.getElementById('set-onboard-website-label').value,
       onboardingShows: document.getElementById('set-onboard-shows').value,
     }, {merge:true});
     showToast('✅ تم حفظ إعدادات الترحيب');
@@ -1001,6 +1025,55 @@ async function saveSetting(key, value){
     await db.collection('settings').doc('app').set({[key]: value}, {merge: true});
     showToast('✅ تم حفظ الإعداد');
   }catch(e){ showToast('❌ ' + e.message); }
+}
+
+// ===== FEEDBACK =====
+async function loadFeedback(){
+  const wrap = document.getElementById('feedback-table');
+  wrap.innerHTML = '<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
+  try{
+    const { data, error } = await sbClient
+      .from('feedback')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if(error) throw error;
+    if(!data || !data.length){
+      wrap.innerHTML = '<div class="empty"><div class="empty-icon">💬</div>لا توجد ملاحظات بعد</div>';
+      return;
+    }
+    const typeMap = {'اقتراح':'💡','مشكلة':'🐛','شكر':'❤️','أخرى':'📝'};
+    wrap.innerHTML = '<table><thead><tr><th>النوع</th><th>الملاحظة</th><th>المستخدم</th><th>الإيميل</th><th>التاريخ</th><th>حذف</th></tr></thead><tbody>'
+      + data.map(r => {
+          const icon = typeMap[r.type] || '📝';
+          const date = r.created_at ? new Date(r.created_at).toLocaleDateString('ar-IQ') : '—';
+          return '<tr>'
+            + '<td><span class="badge badge-free">' + icon + ' ' + (r.type||'—') + '</span></td>'
+            + '<td style="max-width:260px;white-space:pre-wrap;font-size:12px">' + (r.text||'—') + '</td>'
+            + '<td>' + (r.user_name||'—') + '</td>'
+            + '<td style="direction:ltr;text-align:right;color:var(--muted);font-size:11px">' + (r.user_email||'—') + '</td>'
+            + '<td style="color:var(--muted);font-size:11px">' + date + '</td>'
+            + '<td><button class="btn btn-danger" style="font-size:11px;padding:4px 8px" onclick="deleteFeedback(\'' + r.id + '\')">🗑</button></td>'
+            + '</tr>';
+        }).join('')
+      + '</tbody></table>';
+  }catch(e){
+    wrap.innerHTML = '<div class="empty" style="color:var(--muted)">'
+      + '<div class="empty-icon">⚠️</div>'
+      + 'تعذر التحميل — تأكد من إنشاء جدول feedback في Supabase<br>'
+      + '<small style="font-size:11px;margin-top:8px;display:block">SQL: CREATE TABLE feedback (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, user_id text, user_name text, user_email text, type text, text text, created_at timestamptz DEFAULT now());</small>'
+      + '</div>';
+  }
+}
+
+async function deleteFeedback(id){
+  if(!confirm('حذف هذه الملاحظة؟')) return;
+  try{
+    const { error } = await sbClient.from('feedback').delete().eq('id', id);
+    if(error) throw error;
+    showToast('🗑 تم الحذف');
+    loadFeedback();
+  }catch(e){ showToast('❌ '+e.message); }
 }
 
 // ===== BETA MODE =====
