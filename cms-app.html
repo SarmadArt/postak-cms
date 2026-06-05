@@ -553,6 +553,10 @@ select option{background:var(--surface2)}
             <div class="form-group"><label>الاسم</label><input type="text" id="set-free-name" placeholder="🆓 مجاني"></div>
             <div class="form-group"><label>الوصف</label><input type="text" id="set-free-desc" placeholder="للتجربة والبداية"></div>
           </div>
+          <div class="form-group" style="margin-bottom:8px">
+            <label>نص زر الخطة المجانية</label>
+            <input type="text" id="set-free-btn" placeholder="استمر مجاناً">
+          </div>
           <div class="form-group" style="margin-bottom:8px"><label>الميزات (سطر لكل ميزة)</label><textarea id="set-free-features" rows="4" placeholder="✅ 4 أيام تجربة&#10;✅ تصدير JPG&#10;❌ بدون watermark Pro"></textarea></div>
           <div style="font-size:12px;color:var(--accent);font-weight:700;margin:8px 0 4px">💎 Pro شهري</div>
           <div class="form-row">
@@ -839,9 +843,12 @@ async function togglePro(docId, currentlyPro, email){
 // ===== SETTINGS =====
 async function loadSettings(){
   try{
-    const doc = await db.collection('settings').doc('app').get();
-    if(doc.exists){
-      const s = doc.data();
+    const [appDoc, pricingDoc] = await Promise.all([
+      db.collection('settings').doc('app').get(),
+      db.collection('settings').doc('pricing').get()
+    ]);
+    if(appDoc.exists){
+      const s = appDoc.data();
       if(s.onboardingTitle) document.getElementById('set-onboard-title').value=s.onboardingTitle;
       if(s.onboardingSubtitle) document.getElementById('set-onboard-subtitle').value=s.onboardingSubtitle;
       if(s.onboardingTutorialUrl) document.getElementById('set-onboard-tutorial-url').value=s.onboardingTutorialUrl;
@@ -856,6 +863,21 @@ async function loadSettings(){
       if(s.watermark !== undefined) document.getElementById('set-watermark').checked = s.watermark;
       if(s.upgradeMsg !== undefined) document.getElementById('set-upgrade-msg').value = s.upgradeMsg;
     }
+    if(pricingDoc.exists){
+      const p = pricingDoc.data();
+      if(p.title) document.getElementById('set-pricing-title').value=p.title;
+      if(p.subtitle) document.getElementById('set-pricing-subtitle').value=p.subtitle;
+      if(p.freeName) document.getElementById('set-free-name').value=p.freeName;
+      if(p.freeDesc) document.getElementById('set-free-desc').value=p.freeDesc;
+      if(p.freeBtn) document.getElementById('set-free-btn').value=p.freeBtn;
+      if(p.freeFeatures) document.getElementById('set-free-features').value=p.freeFeatures.join('\n');
+      if(p.monthlyName) document.getElementById('set-monthly-name').value=p.monthlyName;
+      if(p.monthlyPrice) document.getElementById('set-monthly-price').value=p.monthlyPrice;
+      if(p.monthlyFeatures) document.getElementById('set-monthly-features').value=p.monthlyFeatures.join('\n');
+      if(p.yearlyName) document.getElementById('set-yearly-name').value=p.yearlyName;
+      if(p.yearlyPrice) document.getElementById('set-yearly-price').value=p.yearlyPrice;
+      if(p.yearlyFeatures) document.getElementById('set-yearly-features').value=p.yearlyFeatures.join('\n');
+    }
   }catch(e){ console.warn('Settings load error:', e.message); }
 }
 
@@ -866,6 +888,7 @@ async function savePricingSettings(){
       subtitle: document.getElementById('set-pricing-subtitle').value,
       freeName: document.getElementById('set-free-name').value,
       freeDesc: document.getElementById('set-free-desc').value,
+      freeBtn: document.getElementById('set-free-btn').value,
       freeFeatures: document.getElementById('set-free-features').value.split('\n').filter(l=>l.trim()),
       monthlyName: document.getElementById('set-monthly-name').value,
       monthlyPrice: document.getElementById('set-monthly-price').value,
