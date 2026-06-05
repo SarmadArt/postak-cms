@@ -6,6 +6,12 @@
 <title>بوستك — لوحة التحكم</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<!-- Firebase — يجب تحميلها في الـ head قبل أي كود -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -252,6 +258,7 @@ select option{background:var(--surface2)}
     <div class="nav-tab" onclick="showSection('users',this)">👥 المستخدمين</div>
     <div class="nav-tab" onclick="showSection('limits',this)">🔒 حدود الخطط</div>
     <div class="nav-tab" onclick="showSection('watermark',this)">💧 Watermark</div>
+    <div class="nav-tab" onclick="showSection('beta',this)">🚀 وضع Beta</div>
     <div class="nav-tab" onclick="showSection('settings',this)">⚙️ الإعدادات</div>
   </nav>
 
@@ -311,12 +318,24 @@ select option{background:var(--surface2)}
             <input type="number" id="lim-max-images" value="3" min="0" max="50">
           </div>
           <div class="form-group" style="margin-bottom:10px">
+            <label>أقصى عدد للأماميات (0 = بلا حد)</label>
+            <input type="number" id="lim-max-topimgs" value="1" min="0" max="20">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
             <label>أقصى عدد للأشكال (0 = بلا حد)</label>
             <input type="number" id="lim-max-shapes" value="3" min="0" max="50">
           </div>
           <div class="form-group" style="margin-bottom:10px">
             <label>أقصى عدد للنصوص الإضافية (0 = بلا حد)</label>
             <input type="number" id="lim-max-extras" value="3" min="0" max="50">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>أقصى عناصر المكتبة دفعة واحدة (0 = بلا حد)</label>
+            <input type="number" id="lim-max-library" value="2" min="0" max="50">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>أقصى عدد المشاريع المحفوظة (0 = بلا حد)</label>
+            <input type="number" id="lim-max-projects" value="5" min="0" max="100">
           </div>
           <button class="btn btn-accent" onclick="saveLimits()">💾 حفظ الحدود</button>
         </div>
@@ -425,6 +444,59 @@ select option{background:var(--surface2)}
       </div>
     </div>
 
+    <!-- BETA MODE SECTION -->
+    <div class="section" id="section-beta">
+      <div class="settings-grid">
+        <div class="setting-card" style="border:2px solid rgba(45,212,191,0.4);background:rgba(45,212,191,0.05)">
+          <div class="setting-title">🚀 وضع Beta المفتوح</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.7">لما يكون مفعّل — كل المستخدمين يحصلون على كل مميزات Pro تلقائياً بدون دفع. مناسب لمرحلة التسويق.</div>
+          <div class="toggle-row" style="margin-bottom:16px">
+            <div><span class="toggle-label" style="font-size:14px;font-weight:700">تفعيل وضع Beta</span><div style="font-size:11px;color:var(--muted);margin-top:2px">يلغي كل القيود ويمنح الكل Pro</div></div>
+            <label class="toggle"><input type="checkbox" id="beta-enabled" onchange="saveBetaMode(this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>رسالة Beta للمستخدمين (تظهر في التطبيق)</label>
+            <input type="text" id="beta-message" placeholder="مثال: أنت في النسخة التجريبية — كل الميزات مجانية الآن! 🎉">
+          </div>
+          <button class="btn btn-accent" onclick="saveBetaSettings()">💾 حفظ إعدادات Beta</button>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">⏱️ فترة التجربة المجانية</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7">بعد انتهاء أيام التجربة — المستخدم غير المشترك يرجع للنسخة المجانية مع Watermark.</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>عدد أيام التجربة (0 = بلا تجربة)</label>
+            <input type="number" id="beta-trial-days" value="4" min="0" max="90">
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>رسالة انتهاء التجربة</label>
+            <textarea id="beta-trial-expired-msg" rows="3" placeholder="انتهت فترة تجربتك المجانية. اشترك للاستمرار بكل الميزات! 💎"></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>رسالة تنبيه عند استخدام ميزة Pro بعد انتهاء التجربة</label>
+            <textarea id="beta-pro-feature-msg" rows="2" placeholder="هذه الميزة كانت متاحة في فترة التجربة. اشترك Pro للوصول إليها ✨"></textarea>
+          </div>
+          <button class="btn btn-accent" onclick="saveTrialSettings()">💾 حفظ إعدادات التجربة</button>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">💎 رسائل الاشتراك</div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>رسالة الترحيب بعد الاشتراك</label>
+            <textarea id="beta-pro-welcome-msg" rows="3" placeholder="مرحباً بك في Pro! الآن تمتع بكل الميزات بلا حدود 🎉"></textarea>
+          </div>
+          <div class="form-group" style="margin-bottom:10px">
+            <label>رسالة انتهاء الاشتراك</label>
+            <textarea id="beta-sub-expired-msg" rows="3" placeholder="انتهى اشتراكك. جدد الاشتراك للاستمرار بالميزات الكاملة 💎"></textarea>
+          </div>
+          <button class="btn btn-accent" onclick="saveSubMessages()">💾 حفظ الرسائل</button>
+        </div>
+        <div class="setting-card">
+          <div class="setting-title">📊 إحصائيات التجربة</div>
+          <div id="beta-stats" style="color:var(--muted);font-size:13px">جاري التحميل...</div>
+          <button class="btn btn-ghost" style="margin-top:12px" onclick="loadBetaStats()">🔄 تحديث</button>
+        </div>
+      </div>
+    </div>
+
     <div class="section" id="section-settings">
       <div class="settings-grid">
         <div class="setting-card">
@@ -526,13 +598,6 @@ select option{background:var(--surface2)}
 
 <div id="toast"></div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 // ===== CONFIG =====
 const FB_CONFIG = {
@@ -593,6 +658,7 @@ function showSection(id, tab){
   if(id === 'settings') loadSettings();
   if(id === 'limits') loadLimits();
   if(id === 'watermark') loadWatermarkSettings();
+  if(id === 'beta') loadBetaSection();
 }
 
 // ===== TOAST =====
@@ -827,6 +893,9 @@ async function loadLimits(){
     if(s.proMults!==undefined) document.getElementById('lim-pro-mults').value=s.proMults;
     if(s.communityFree!==undefined) document.getElementById('lim-community-free').checked=s.communityFree;
     if(s.communityShareFree!==undefined) document.getElementById('lim-community-share').checked=s.communityShareFree;
+    if(s.maxTopImgs!==undefined) document.getElementById('lim-max-topimgs').value=s.maxTopImgs;
+    if(s.maxLibrary!==undefined) document.getElementById('lim-max-library').value=s.maxLibrary;
+    if(s.maxProjects!==undefined) document.getElementById('lim-max-projects').value=s.maxProjects;
   }catch(e){ console.warn('loadLimits:', e.message); }
 }
 
@@ -834,8 +903,11 @@ async function saveLimits(){
   try{
     await db.collection('settings').doc('limits').set({
       maxImages: +document.getElementById('lim-max-images').value,
+      maxTopImgs: +document.getElementById('lim-max-topimgs').value,
       maxShapes: +document.getElementById('lim-max-shapes').value,
       maxExtras: +document.getElementById('lim-max-extras').value,
+      maxLibrary: +document.getElementById('lim-max-library').value,
+      maxProjects: +document.getElementById('lim-max-projects').value,
       freeMults: document.getElementById('lim-free-mults').value,
       proMults: document.getElementById('lim-pro-mults').value,
     },{merge:true});
@@ -929,6 +1001,96 @@ async function saveSetting(key, value){
     await db.collection('settings').doc('app').set({[key]: value}, {merge: true});
     showToast('✅ تم حفظ الإعداد');
   }catch(e){ showToast('❌ ' + e.message); }
+}
+
+// ===== BETA MODE =====
+async function loadBetaSection(){
+  try{
+    const doc = await db.collection('settings').doc('beta').get();
+    if(doc.exists){
+      const s = doc.data();
+      if(s.betaEnabled !== undefined) document.getElementById('beta-enabled').checked = s.betaEnabled;
+      if(s.betaMessage) document.getElementById('beta-message').value = s.betaMessage;
+      if(s.trialDays !== undefined) document.getElementById('beta-trial-days').value = s.trialDays;
+      if(s.trialExpiredMsg) document.getElementById('beta-trial-expired-msg').value = s.trialExpiredMsg;
+      if(s.proFeatureMsg) document.getElementById('beta-pro-feature-msg').value = s.proFeatureMsg;
+      if(s.proWelcomeMsg) document.getElementById('beta-pro-welcome-msg').value = s.proWelcomeMsg;
+      if(s.subExpiredMsg) document.getElementById('beta-sub-expired-msg').value = s.subExpiredMsg;
+    }
+    loadBetaStats();
+  }catch(e){ console.warn('loadBeta:', e.message); }
+}
+
+async function saveBetaMode(enabled){
+  try{
+    await db.collection('settings').doc('beta').set({betaEnabled: enabled},{merge:true});
+    showToast(enabled ? '🚀 وضع Beta مفعّل — الكل يحصل على Pro' : '✅ وضع Beta متوقف');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function saveBetaSettings(){
+  try{
+    await db.collection('settings').doc('beta').set({
+      betaEnabled: document.getElementById('beta-enabled').checked,
+      betaMessage: document.getElementById('beta-message').value,
+    },{merge:true});
+    showToast('✅ تم حفظ إعدادات Beta');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function saveTrialSettings(){
+  try{
+    await db.collection('settings').doc('beta').set({
+      trialDays: +document.getElementById('beta-trial-days').value,
+      trialExpiredMsg: document.getElementById('beta-trial-expired-msg').value,
+      proFeatureMsg: document.getElementById('beta-pro-feature-msg').value,
+    },{merge:true});
+    // sync trialDays to app settings too
+    await db.collection('settings').doc('app').set({
+      trialDays: +document.getElementById('beta-trial-days').value,
+    },{merge:true});
+    showToast('✅ تم حفظ إعدادات التجربة');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function saveSubMessages(){
+  try{
+    await db.collection('settings').doc('beta').set({
+      proWelcomeMsg: document.getElementById('beta-pro-welcome-msg').value,
+      subExpiredMsg: document.getElementById('beta-sub-expired-msg').value,
+    },{merge:true});
+    showToast('✅ تم حفظ رسائل الاشتراك');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function loadBetaStats(){
+  const el = document.getElementById('beta-stats');
+  if(!el) return;
+  try{
+    const snap = await db.collection('users').get();
+    if(snap.empty){ el.innerHTML = '<div style="color:var(--muted)">لا توجد بيانات مستخدمين بعد</div>'; return; }
+    const betaDoc = await db.collection('settings').doc('beta').get();
+    const trialDays = betaDoc.exists ? (betaDoc.data().trialDays || 4) : 4;
+    const now = Date.now();
+    let total=0, inTrial=0, trialExpired=0, pro=0, free=0;
+    snap.docs.forEach(doc => {
+      const u = doc.data();
+      total++;
+      if(u.isPro){ pro++; return; }
+      if(u.createdAt){
+        const created = u.createdAt.seconds * 1000;
+        const daysSince = (now - created) / (1000*60*60*24);
+        if(daysSince <= trialDays) inTrial++;
+        else trialExpired++;
+      } else { free++; }
+    });
+    el.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">'
+      + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--accent)">'+total+'</div><div style="font-size:11px;color:var(--muted)">إجمالي المستخدمين</div></div>'
+      + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:#a78bfa">'+pro+'</div><div style="font-size:11px;color:var(--muted)">مشتركين Pro</div></div>'
+      + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:#2dd4bf">'+inTrial+'</div><div style="font-size:11px;color:var(--muted)">في فترة التجربة (أقل من '+trialDays+' يوم)</div></div>'
+      + '<div style="background:var(--surface2);border-radius:8px;padding:10px;text-align:center"><div style="font-size:22px;font-weight:700;color:#f87171">'+trialExpired+'</div><div style="font-size:11px;color:var(--muted)">انتهت تجربتهم (مجاني محدود)</div></div>'
+      + '</div><div style="font-size:11px;color:var(--muted)">فترة التجربة الحالية: <strong style="color:var(--text)">'+trialDays+' أيام</strong></div>';
+  }catch(e){ el.innerHTML = '<div style="color:var(--muted)">تعذر تحميل الإحصائيات</div>'; }
 }
 </script>
 </body>
