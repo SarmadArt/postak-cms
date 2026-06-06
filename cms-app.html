@@ -260,6 +260,7 @@ select option{background:var(--surface2)}
     <div class="nav-tab" onclick="showSection('watermark',this)">💧 Watermark</div>
     <div class="nav-tab" onclick="showSection('feedback',this)">💬 الملاحظات</div>
     <div class="nav-tab" onclick="showSection('beta',this)">🚀 وضع Beta</div>
+    <div class="nav-tab" onclick="showSection('payment',this)">💳 الدفع</div>
     <div class="nav-tab" onclick="showSection('settings',this)">⚙️ الإعدادات</div>
   </nav>
 
@@ -509,6 +510,181 @@ select option{background:var(--surface2)}
       </div>
     </div>
 
+    <!-- PAYMENT GATEWAY -->
+    <div class="section" id="section-payment">
+
+      <!-- حالة الدفع العامة -->
+      <div class="settings-grid" style="margin-bottom:20px">
+        <div class="setting-card" style="grid-column:1/-1">
+          <div class="setting-title">💳 إعدادات بوابة الدفع</div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:16px">
+            اختر بوابة الدفع النشطة وأدخل مفاتيحها. الـ Secret Key يُخزن في Firestore ولا يظهر للمستخدمين — متاح للأدمن فقط.
+          </div>
+          <div class="form-row" style="margin-bottom:16px">
+            <div class="form-group">
+              <label>البوابة النشطة</label>
+              <select id="pay-gateway" onchange="onGatewayChange(this.value)">
+                <option value="tap">Tap Payment (الكويت)</option>
+                <option value="paytabs">PayTabs (السعودية / عُمان / العراق)</option>
+                <option value="zaincash">ZainCash (العراق)</option>
+                <option value="stripe">Stripe</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>البيئة</label>
+              <select id="pay-env">
+                <option value="test">🧪 Test — تجريبي</option>
+                <option value="live">🚀 Live — إنتاج</option>
+              </select>
+            </div>
+          </div>
+          <div class="toggle-row" style="margin-bottom:16px">
+            <div>
+              <span class="toggle-label" style="font-size:14px;font-weight:700">تفعيل بوابة الدفع</span>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">إيقاف = لا يظهر زر الاشتراك للمستخدمين</div>
+            </div>
+            <label class="toggle"><input type="checkbox" id="pay-enabled"><span class="toggle-slider"></span></label>
+          </div>
+          <button class="btn btn-accent" onclick="savePaymentGlobal()">💾 حفظ الإعدادات العامة</button>
+        </div>
+      </div>
+
+      <!-- بطاقات البوابات -->
+      <div id="pay-gateway-cards">
+
+        <!-- TAP -->
+        <div class="form-card pay-card" id="card-tap">
+          <div class="form-title">
+            <span style="background:linear-gradient(135deg,#0070f3,#00c6ff);padding:6px 14px;border-radius:8px;font-size:12px;color:#fff;font-weight:700">Tap Payment</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:400">tap.company</span>
+            <span id="tap-env-badge" style="margin-right:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)">🧪 Test</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Public Key <span style="color:var(--accent);font-size:10px">— آمن للعرض</span></label>
+              <input type="text" id="tap-public-key" placeholder="pk_test_..." autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label>Secret Key <span style="color:var(--red);font-size:10px">— سري — لا تشاركه</span></label>
+              <div style="position:relative">
+                <input type="password" id="tap-secret-key" placeholder="sk_test_..." autocomplete="off" style="padding-left:40px">
+                <button onclick="toggleKeyVisibility('tap-secret-key','tap-eye')" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px" id="tap-eye">👁</button>
+              </div>
+            </div>
+          </div>
+          <div style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);border-radius:10px;padding:12px;font-size:12px;color:#fbbf24;margin-bottom:12px;line-height:1.7">
+            ⚠️ الـ Secret Key يُخزن في Firestore ضمن <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px">settings/payment</code> — تأكد من Firebase Rules تمنع القراءة لغير الأدمن.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-accent" onclick="saveGatewayKeys('tap')">💾 حفظ مفاتيح Tap</button>
+            <button class="btn btn-ghost" onclick="testGatewayConnection('tap')">🔌 اختبار الاتصال</button>
+            <a href="https://dashboard.tap.company/developers/api-keys" target="_blank" class="btn btn-ghost" style="text-decoration:none">🔗 Tap Dashboard</a>
+          </div>
+          <div id="tap-test-result" style="margin-top:10px;font-size:12px;display:none"></div>
+        </div>
+
+        <!-- PAYTABS -->
+        <div class="form-card pay-card" id="card-paytabs" style="display:none">
+          <div class="form-title">
+            <span style="background:linear-gradient(135deg,#00b09b,#96c93d);padding:6px 14px;border-radius:8px;font-size:12px;color:#fff;font-weight:700">PayTabs</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:400">paytabs.com</span>
+            <span id="paytabs-env-badge" style="margin-right:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)">🧪 Test</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Profile ID <span style="color:var(--accent);font-size:10px">— من لوحة PayTabs</span></label>
+              <input type="text" id="paytabs-profile-id" placeholder="123456" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label>Server Key <span style="color:var(--red);font-size:10px">— سري</span></label>
+              <div style="position:relative">
+                <input type="password" id="paytabs-server-key" placeholder="SKXXXXXXXXXXXXXXX" autocomplete="off" style="padding-left:40px">
+                <button onclick="toggleKeyVisibility('paytabs-server-key','paytabs-eye')" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px" id="paytabs-eye">👁</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-accent" onclick="saveGatewayKeys('paytabs')">💾 حفظ مفاتيح PayTabs</button>
+            <a href="https://merchant.paytabs.com/merchant/developers" target="_blank" class="btn btn-ghost" style="text-decoration:none">🔗 PayTabs Dashboard</a>
+          </div>
+        </div>
+
+        <!-- ZAINCASH -->
+        <div class="form-card pay-card" id="card-zaincash" style="display:none">
+          <div class="form-title">
+            <span style="background:linear-gradient(135deg,#c62a2a,#ff6b6b);padding:6px 14px;border-radius:8px;font-size:12px;color:#fff;font-weight:700">ZainCash</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:400">zaincash.iq — العراق</span>
+            <span id="zaincash-env-badge" style="margin-right:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)">🧪 Test</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>MSISDN <span style="color:var(--accent);font-size:10px">— رقم الهاتف التاجر</span></label>
+              <input type="text" id="zaincash-msisdn" placeholder="9647801234567" autocomplete="off" dir="ltr">
+            </div>
+            <div class="form-group">
+              <label>Secret <span style="color:var(--red);font-size:10px">— سري</span></label>
+              <div style="position:relative">
+                <input type="password" id="zaincash-secret" placeholder="secret..." autocomplete="off" style="padding-left:40px" dir="ltr">
+                <button onclick="toggleKeyVisibility('zaincash-secret','zaincash-eye')" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px" id="zaincash-eye">👁</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>Merchant ID</label>
+            <input type="text" id="zaincash-merchant-id" placeholder="merchant_id من ZainCash" autocomplete="off" dir="ltr">
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-accent" onclick="saveGatewayKeys('zaincash')">💾 حفظ مفاتيح ZainCash</button>
+            <a href="https://zaincash.iq" target="_blank" class="btn btn-ghost" style="text-decoration:none">🔗 ZainCash</a>
+          </div>
+        </div>
+
+        <!-- STRIPE -->
+        <div class="form-card pay-card" id="card-stripe" style="display:none">
+          <div class="form-title">
+            <span style="background:linear-gradient(135deg,#635bff,#a78bfa);padding:6px 14px;border-radius:8px;font-size:12px;color:#fff;font-weight:700">Stripe</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:400">stripe.com</span>
+            <span id="stripe-env-badge" style="margin-right:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)">🧪 Test</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Publishable Key <span style="color:var(--accent);font-size:10px">— آمن للعرض</span></label>
+              <input type="text" id="stripe-public-key" placeholder="pk_test_..." autocomplete="off" dir="ltr">
+            </div>
+            <div class="form-group">
+              <label>Secret Key <span style="color:var(--red);font-size:10px">— سري</span></label>
+              <div style="position:relative">
+                <input type="password" id="stripe-secret-key" placeholder="sk_test_..." autocomplete="off" style="padding-left:40px" dir="ltr">
+                <button onclick="toggleKeyVisibility('stripe-secret-key','stripe-eye')" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px" id="stripe-eye">👁</button>
+              </div>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>Webhook Secret <span style="color:var(--red);font-size:10px">— سري</span></label>
+            <div style="position:relative">
+              <input type="password" id="stripe-webhook-secret" placeholder="whsec_..." autocomplete="off" style="padding-left:40px" dir="ltr">
+              <button onclick="toggleKeyVisibility('stripe-webhook-secret','stripe-wh-eye')" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px" id="stripe-wh-eye">👁</button>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-accent" onclick="saveGatewayKeys('stripe')">💾 حفظ مفاتيح Stripe</button>
+            <a href="https://dashboard.stripe.com/apikeys" target="_blank" class="btn btn-ghost" style="text-decoration:none">🔗 Stripe Dashboard</a>
+          </div>
+        </div>
+
+      </div><!-- end pay-gateway-cards -->
+
+      <!-- سجل النشاط -->
+      <div class="table-wrap" style="margin-top:20px">
+        <div class="table-header">
+          <div class="table-title">📋 آخر تغييرات مفاتيح الدفع</div>
+          <button class="btn btn-ghost" onclick="loadPaymentLog()">🔄 تحديث</button>
+        </div>
+        <div id="payment-log"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+
+    </div><!-- end section-payment -->
+
     <div class="section" id="section-settings">
       <div class="settings-grid">
         <div class="setting-card">
@@ -684,6 +860,7 @@ function showSection(id, tab){
   if(id === 'watermark') loadWatermarkSettings();
   if(id === 'feedback') loadFeedback();
   if(id === 'beta') loadBetaSection();
+  if(id === 'payment') loadPaymentSection();
 }
 
 // ===== TOAST =====
@@ -1051,7 +1228,207 @@ async function saveSetting(key, value){
   }catch(e){ showToast('❌ ' + e.message); }
 }
 
-// ===== FEEDBACK =====
+// ===== PAYMENT GATEWAY =====
+async function loadPaymentSection(){
+  try{
+    const doc = await db.collection('settings').doc('payment').get();
+    if(!doc.exists){ loadPaymentLog(); return; }
+    const s = doc.data();
+
+    // إعدادات عامة
+    if(s.gateway) document.getElementById('pay-gateway').value = s.gateway;
+    if(s.env)     document.getElementById('pay-env').value = s.env;
+    if(s.enabled !== undefined) document.getElementById('pay-enabled').checked = s.enabled;
+
+    // Tap
+    if(s.tap_public_key) document.getElementById('tap-public-key').value = s.tap_public_key;
+    if(s.tap_secret_key) document.getElementById('tap-secret-key').value = s.tap_secret_key;
+
+    // PayTabs
+    if(s.paytabs_profile_id)  document.getElementById('paytabs-profile-id').value  = s.paytabs_profile_id;
+    if(s.paytabs_server_key)  document.getElementById('paytabs-server-key').value   = s.paytabs_server_key;
+
+    // ZainCash
+    if(s.zaincash_msisdn)      document.getElementById('zaincash-msisdn').value      = s.zaincash_msisdn;
+    if(s.zaincash_secret)      document.getElementById('zaincash-secret').value       = s.zaincash_secret;
+    if(s.zaincash_merchant_id) document.getElementById('zaincash-merchant-id').value  = s.zaincash_merchant_id;
+
+    // Stripe
+    if(s.stripe_public_key)     document.getElementById('stripe-public-key').value     = s.stripe_public_key;
+    if(s.stripe_secret_key)     document.getElementById('stripe-secret-key').value     = s.stripe_secret_key;
+    if(s.stripe_webhook_secret) document.getElementById('stripe-webhook-secret').value = s.stripe_webhook_secret;
+
+    // تحديث الواجهة
+    onGatewayChange(s.gateway || 'tap');
+    updateEnvBadges(s.env || 'test');
+  }catch(e){ console.warn('loadPayment:', e.message); }
+  loadPaymentLog();
+}
+
+function onGatewayChange(val){
+  // إخفاء كل البطاقات وإظهار المختارة
+  document.querySelectorAll('.pay-card').forEach(c => c.style.display='none');
+  const card = document.getElementById('card-' + val);
+  if(card) card.style.display='block';
+
+  // تحديث الـ env badges
+  const env = document.getElementById('pay-env').value;
+  updateEnvBadges(env);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const envSelect = document.getElementById('pay-env');
+  if(envSelect) envSelect.addEventListener('change', e => updateEnvBadges(e.target.value));
+});
+
+function updateEnvBadges(env){
+  const isTest = env === 'test';
+  const badgeText  = isTest ? '🧪 Test' : '🚀 Live';
+  const badgeBg    = isTest ? 'rgba(251,191,36,0.1)'  : 'rgba(74,222,128,0.1)';
+  const badgeColor = isTest ? '#fbbf24' : '#4ade80';
+  const badgeBorder= isTest ? 'rgba(251,191,36,0.2)' : 'rgba(74,222,128,0.2)';
+  ['tap','paytabs','zaincash','stripe'].forEach(gw => {
+    const b = document.getElementById(gw + '-env-badge');
+    if(b){
+      b.textContent = badgeText;
+      b.style.background = badgeBg;
+      b.style.color = badgeColor;
+      b.style.borderColor = badgeBorder;
+    }
+  });
+}
+
+async function savePaymentGlobal(){
+  try{
+    const gateway = document.getElementById('pay-gateway').value;
+    const env     = document.getElementById('pay-env').value;
+    const enabled = document.getElementById('pay-enabled').checked;
+    await db.collection('settings').doc('payment').set({ gateway, env, enabled }, {merge:true});
+    onGatewayChange(gateway);
+    await logPaymentChange('تغيير إعدادات عامة', `البوابة: ${gateway} | البيئة: ${env} | مفعّل: ${enabled}`);
+    showToast('✅ تم حفظ الإعدادات العامة');
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function saveGatewayKeys(gw){
+  try{
+    let data = {};
+    if(gw === 'tap'){
+      const pub = document.getElementById('tap-public-key').value.trim();
+      const sec = document.getElementById('tap-secret-key').value.trim();
+      if(!pub || !sec){ showToast('❌ أدخل Public Key و Secret Key'); return; }
+      if(!pub.startsWith('pk_')){ showToast('❌ Public Key يجب أن يبدأ بـ pk_'); return; }
+      if(!sec.startsWith('sk_')){ showToast('❌ Secret Key يجب أن يبدأ بـ sk_'); return; }
+      data = { tap_public_key: pub, tap_secret_key: sec };
+    } else if(gw === 'paytabs'){
+      const pid = document.getElementById('paytabs-profile-id').value.trim();
+      const sk  = document.getElementById('paytabs-server-key').value.trim();
+      if(!pid || !sk){ showToast('❌ أدخل Profile ID و Server Key'); return; }
+      data = { paytabs_profile_id: pid, paytabs_server_key: sk };
+    } else if(gw === 'zaincash'){
+      const msisdn = document.getElementById('zaincash-msisdn').value.trim();
+      const secret = document.getElementById('zaincash-secret').value.trim();
+      const mid    = document.getElementById('zaincash-merchant-id').value.trim();
+      if(!msisdn || !secret){ showToast('❌ أدخل MSISDN و Secret'); return; }
+      data = { zaincash_msisdn: msisdn, zaincash_secret: secret, zaincash_merchant_id: mid };
+    } else if(gw === 'stripe'){
+      const pub = document.getElementById('stripe-public-key').value.trim();
+      const sec = document.getElementById('stripe-secret-key').value.trim();
+      const wh  = document.getElementById('stripe-webhook-secret').value.trim();
+      if(!pub || !sec){ showToast('❌ أدخل Public Key و Secret Key'); return; }
+      data = { stripe_public_key: pub, stripe_secret_key: sec, stripe_webhook_secret: wh };
+    }
+    await db.collection('settings').doc('payment').set(data, {merge:true});
+    const env = document.getElementById('pay-env').value;
+    await logPaymentChange(`حفظ مفاتيح ${gw}`, `البيئة: ${env} | Public Key محدّث`);
+    showToast('✅ تم حفظ مفاتيح ' + gw);
+  }catch(e){ showToast('❌ '+e.message); }
+}
+
+async function testGatewayConnection(gw){
+  const resultEl = document.getElementById(gw + '-test-result');
+  if(!resultEl) return;
+  resultEl.style.display = 'block';
+  resultEl.style.color = 'var(--muted)';
+  resultEl.textContent = '⏳ جاري الاختبار...';
+  try{
+    if(gw === 'tap'){
+      const pub = document.getElementById('tap-public-key').value.trim();
+      const sec = document.getElementById('tap-secret-key').value.trim();
+      if(!pub || !sec){ resultEl.style.color='var(--red)'; resultEl.textContent='❌ أدخل المفاتيح أولاً'; return; }
+      // اختبار بسيط — نتحقق من صيغة المفاتيح فقط (لا نستطيع استدعاء API مباشرة من المتصفح بسبب CORS)
+      const env = document.getElementById('pay-env').value;
+      const isTest = env === 'test';
+      const pubOk = isTest ? pub.startsWith('pk_test_') : pub.startsWith('pk_live_');
+      const secOk = isTest ? sec.startsWith('sk_test_') : sec.startsWith('sk_live_');
+      if(pubOk && secOk){
+        resultEl.style.color='var(--green)';
+        resultEl.textContent = '✅ صيغة المفاتيح صحيحة — البيئة: ' + (isTest?'Test 🧪':'Live 🚀');
+      } else {
+        resultEl.style.color='var(--yellow)';
+        resultEl.textContent = '⚠️ تحقق من المفاتيح — يبدو أن البيئة غير متطابقة مع نوع المفاتيح';
+      }
+    } else {
+      resultEl.style.color='var(--accent)';
+      resultEl.textContent = 'ℹ️ اختبار الاتصال متاح لـ Tap فقط حالياً';
+    }
+  }catch(e){ resultEl.style.color='var(--red)'; resultEl.textContent='❌ '+e.message; }
+}
+
+function toggleKeyVisibility(inputId, btnId){
+  const input = document.getElementById(inputId);
+  const btn   = document.getElementById(btnId);
+  if(!input) return;
+  if(input.type === 'password'){
+    input.type = 'text';
+    if(btn) btn.textContent = '🙈';
+  } else {
+    input.type = 'password';
+    if(btn) btn.textContent = '👁';
+  }
+}
+
+async function logPaymentChange(action, detail){
+  try{
+    await db.collection('payment_logs').add({
+      action, detail,
+      by: ADMIN_EMAIL,
+      at: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){ console.warn('log error:', e.message); }
+}
+
+async function loadPaymentLog(){
+  const wrap = document.getElementById('payment-log');
+  if(!wrap) return;
+  try{
+    const snap = await db.collection('payment_logs')
+      .orderBy('at','desc').limit(20).get();
+    if(snap.empty){
+      wrap.innerHTML='<div class="empty"><div class="empty-icon">📋</div>لا توجد سجلات بعد</div>';
+      return;
+    }
+    wrap.innerHTML = '<table><thead><tr><th>الإجراء</th><th>التفاصيل</th><th>بواسطة</th><th>التاريخ</th></tr></thead><tbody>'
+      + snap.docs.map(doc => {
+          const l = doc.data();
+          const date = l.at ? new Date(l.at.seconds*1000).toLocaleString('ar-IQ') : '—';
+          return '<tr>'
+            +'<td><strong>'+l.action+'</strong></td>'
+            +'<td style="color:var(--muted);font-size:12px">'+l.detail+'</td>'
+            +'<td style="color:var(--muted);font-size:11px">'+l.by+'</td>'
+            +'<td style="color:var(--muted);font-size:11px;direction:ltr;text-align:right">'+date+'</td>'
+            +'</tr>';
+        }).join('')
+      + '</tbody></table>';
+  }catch(e){
+    wrap.innerHTML='<div class="empty" style="color:var(--muted)"><div class="empty-icon">📋</div>'
+      +'لا توجد سجلات بعد — ستظهر هنا بعد أول حفظ للمفاتيح<br>'
+      +'<small style="font-size:11px;margin-top:8px;display:block">تأكد من إنشاء collection "payment_logs" في Firestore</small>'
+      +'</div>';
+  }
+}
+
+
 async function loadFeedback(){
   const wrap = document.getElementById('feedback-table');
   wrap.innerHTML = '<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
