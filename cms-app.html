@@ -528,6 +528,7 @@ select option{background:var(--surface2)}
                 <option value="paytabs">PayTabs (السعودية / عُمان / العراق)</option>
                 <option value="zaincash">ZainCash (العراق)</option>
                 <option value="stripe">Stripe</option>
+                <option value="iq">IQ (العراق)</option>
               </select>
             </div>
             <div class="form-group">
@@ -669,6 +670,42 @@ select option{background:var(--surface2)}
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button class="btn btn-accent" onclick="saveGatewayKeys('stripe')">💾 حفظ مفاتيح Stripe</button>
             <a href="https://dashboard.stripe.com/apikeys" target="_blank" class="btn btn-ghost" style="text-decoration:none">🔗 Stripe Dashboard</a>
+          </div>
+        </div>
+
+        <!-- IQ العراق -->
+        <div class="form-card pay-card" id="card-iq" style="display:none">
+          <div class="form-title">
+            <span style="background:linear-gradient(135deg,#0d7c3d,#16a34a);padding:6px 14px;border-radius:8px;font-size:12px;color:#fff;font-weight:700">IQ Payment</span>
+            <span style="font-size:12px;color:var(--muted);font-weight:400">iq-pay.iq — العراق</span>
+            <span id="iq-env-badge" style="margin-right:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)">🧪 Test</span>
+          </div>
+          <div style="background:rgba(45,212,191,0.06);border:1px solid rgba(45,212,191,0.15);border-radius:10px;padding:12px;font-size:12px;color:var(--accent);margin-bottom:14px;line-height:1.7">
+            ℹ️ بطاقة جاهزة — أدخل بياناتك بعد التسجيل في <strong>IQ Payment</strong> للحصول على المفاتيح.
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Merchant ID <span style="color:var(--accent);font-size:10px">— رقم التاجر</span></label>
+              <input type="text" id="iq-merchant-id" placeholder="IQ-MERCHANT-XXXX" autocomplete="off" dir="ltr">
+            </div>
+            <div class="form-group">
+              <label>Terminal ID <span style="color:var(--accent);font-size:10px">— رقم الطرفية</span></label>
+              <input type="text" id="iq-terminal-id" placeholder="TERM-XXXX" autocomplete="off" dir="ltr">
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label>API Key <span style="color:var(--red);font-size:10px">— سري — لا تشاركه</span></label>
+            <div style="position:relative">
+              <input type="password" id="iq-api-key" placeholder="ستحصل عليه من لوحة IQ بعد التسجيل" autocomplete="off" style="padding-left:40px" dir="ltr">
+              <button onclick="toggleKeyVisibility('iq-api-key','iq-eye')" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px" id="iq-eye">👁</button>
+            </div>
+          </div>
+          <div style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);border-radius:10px;padding:12px;font-size:12px;color:#fbbf24;margin-bottom:14px;line-height:1.7">
+            ⚠️ المفاتيح تُخزن في Firestore ضمن <code style="background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px">settings/payment</code> — تأكد من Firebase Rules تمنع القراءة لغير الأدمن.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-accent" onclick="saveGatewayKeys('iq')">💾 حفظ مفاتيح IQ</button>
+            <a href="https://iq-pay.iq" target="_blank" class="btn btn-ghost" style="text-decoration:none">🔗 IQ Dashboard</a>
           </div>
         </div>
 
@@ -1258,6 +1295,11 @@ async function loadPaymentSection(){
     if(s.stripe_secret_key)     document.getElementById('stripe-secret-key').value     = s.stripe_secret_key;
     if(s.stripe_webhook_secret) document.getElementById('stripe-webhook-secret').value = s.stripe_webhook_secret;
 
+    // IQ
+    if(s.iq_merchant_id) document.getElementById('iq-merchant-id').value = s.iq_merchant_id;
+    if(s.iq_terminal_id) document.getElementById('iq-terminal-id').value = s.iq_terminal_id;
+    if(s.iq_api_key)     document.getElementById('iq-api-key').value     = s.iq_api_key;
+
     // تحديث الواجهة
     onGatewayChange(s.gateway || 'tap');
     updateEnvBadges(s.env || 'test');
@@ -1287,7 +1329,7 @@ function updateEnvBadges(env){
   const badgeBg    = isTest ? 'rgba(251,191,36,0.1)'  : 'rgba(74,222,128,0.1)';
   const badgeColor = isTest ? '#fbbf24' : '#4ade80';
   const badgeBorder= isTest ? 'rgba(251,191,36,0.2)' : 'rgba(74,222,128,0.2)';
-  ['tap','paytabs','zaincash','stripe'].forEach(gw => {
+  ['tap','paytabs','zaincash','stripe','iq'].forEach(gw => {
     const b = document.getElementById(gw + '-env-badge');
     if(b){
       b.textContent = badgeText;
@@ -1337,6 +1379,12 @@ async function saveGatewayKeys(gw){
       const wh  = document.getElementById('stripe-webhook-secret').value.trim();
       if(!pub || !sec){ showToast('❌ أدخل Public Key و Secret Key'); return; }
       data = { stripe_public_key: pub, stripe_secret_key: sec, stripe_webhook_secret: wh };
+    } else if(gw === 'iq'){
+      const mid  = document.getElementById('iq-merchant-id').value.trim();
+      const term = document.getElementById('iq-terminal-id').value.trim();
+      const key  = document.getElementById('iq-api-key').value.trim();
+      if(!mid || !key){ showToast('❌ أدخل Merchant ID و API Key'); return; }
+      data = { iq_merchant_id: mid, iq_terminal_id: term, iq_api_key: key };
     }
     await db.collection('settings').doc('payment').set(data, {merge:true});
     const env = document.getElementById('pay-env').value;
