@@ -29,14 +29,6 @@
   --yellow:#fbbf24;
 }
 body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
-/* ===== TOGGLE SWITCH ===== */
-.toggle-switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
-.toggle-switch input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--surface2);border:1px solid var(--border2);border-radius:24px;transition:.3s}
-.toggle-slider:before{position:absolute;content:"";height:16px;width:16px;left:3px;bottom:3px;background:var(--muted);border-radius:50%;transition:.3s}
-.toggle-switch input:checked + .toggle-slider{background:var(--accent);border-color:var(--accent)}
-.toggle-switch input:checked + .toggle-slider:before{transform:translateX(20px);background:#fff}
-
 
 /* ===== LOGIN ===== */
 #login-screen{
@@ -269,8 +261,6 @@ select option{background:var(--surface2)}
     <div class="nav-tab" onclick="showSection('feedback',this)">💬 الملاحظات</div>
     <div class="nav-tab" onclick="showSection('beta',this)">🚀 وضع Beta</div>
     <div class="nav-tab" onclick="showSection('settings',this)">⚙️ الإعدادات</div>
-    <div class="nav-tab" onclick="showSection('email',this)">📧 الإيميل الترحيبي</div>
-    <div class="nav-tab" onclick="showSection('payment',this)">💳 بوابة الدفع</div>
   </nav>
 
   <main>
@@ -607,11 +597,6 @@ select option{background:var(--surface2)}
             <input type="text" id="set-onboard-website-label" placeholder="postak.vercel.app">
           </div>
           <div class="form-group">
-            <label>🎬 رابط Lottie تثبيت iOS (JSON)</label>
-            <input type="text" id="set-ios-lottie-url" placeholder="https://...supabase.co/.../How to Install in Safari.json">
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">يظهر في popup التثبيت على iPhone — ارفعه على Supabase Storage</div>
-          </div>
-          <div class="form-group">
             <label>عدد مرات الظهور</label>
             <select id="set-onboard-shows">
               <option value="1">مرة واحدة</option>
@@ -632,221 +617,6 @@ select option{background:var(--surface2)}
       </div>
     </div>
 
-    <!-- EMAIL SECTION -->
-    <div class="section" id="section-email">
-
-      <!-- Logo row -->
-      <div class="settings-grid" style="grid-template-columns:1fr;max-width:720px">
-        <div class="setting-card">
-          <div class="setting-title">🖼️ شعار الإيميل</div>
-          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-            <img id="email-logo-preview" src="" alt="شعار"
-              style="height:56px;border-radius:10px;background:var(--surface2);padding:6px;display:none;object-fit:contain">
-            <div style="flex:1;min-width:200px">
-              <div class="form-group" style="margin:0">
-                <label>رابط الشعار من Supabase Storage</label>
-                <input type="text" id="email-logo-url"
-                  placeholder="https://...supabase.co/storage/v1/object/public/.../logo.png"
-                  oninput="previewLogo(this.value)">
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Subject -->
-        <div class="setting-card">
-          <div class="setting-title">✉️ سطر الموضوع</div>
-          <div class="form-group" style="margin:0">
-            <input type="text" id="email-subject"
-              placeholder="مثال: مرحباً بك في بوستك 🎉 | Welcome to Postak">
-          </div>
-        </div>
-
-        <!-- Arabic text -->
-        <div class="setting-card">
-          <div class="setting-title">🇸🇦 النص العربي</div>
-          <div class="form-group" style="margin:0">
-            <textarea id="email-arabic" rows="7" dir="rtl"
-              placeholder="اكتب نص الإيميل الترحيبي بالعربية هنا...&#10;&#10;مثال:&#10;مرحباً بك في بوستك! 🎨&#10;&#10;يسعدنا انضمامك إلينا."
-              oninput="onArabicInput()"></textarea>
-          </div>
-        </div>
-
-        <!-- Auto translate toggle -->
-        <div class="setting-card" style="padding:16px 20px">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-            <div style="display:flex;align-items:center;gap:12px">
-              <label class="toggle-switch">
-                <input type="checkbox" id="auto-translate-toggle" checked onchange="toggleAutoTranslate(this.checked)">
-                <span class="toggle-slider"></span>
-              </label>
-              <div>
-                <div style="font-size:14px;font-weight:700;color:var(--text)">ترجمة تلقائية بـ Claude AI</div>
-                <div style="font-size:12px;color:var(--muted);margin-top:2px">تترجم النص العربي إنجليزي عند الحفظ</div>
-              </div>
-            </div>
-            <button class="btn btn-ghost" onclick="translateNow()" id="translate-now-btn">⚡ ترجم الآن</button>
-            <span id="translate-status" style="font-size:13px;color:var(--accent)"></span>
-          </div>
-        </div>
-
-        <!-- English text -->
-        <div class="setting-card" id="english-card">
-          <div class="setting-title" id="english-label">🌐 النص الإنجليزي <span style="font-size:11px;color:var(--muted);font-weight:400">(مترجم تلقائياً)</span></div>
-          <div class="form-group" style="margin:0">
-            <textarea id="email-english" rows="7" dir="ltr"
-              placeholder="English text will appear here automatically..."></textarea>
-          </div>
-        </div>
-
-        <!-- Preview + Save -->
-        <div class="setting-card" style="padding:16px 20px">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-            <button class="btn btn-ghost" onclick="togglePreview()">👁 معاينة الإيميل</button>
-            <div style="display:flex;align-items:center;gap:12px">
-              <span id="email-last-saved" style="font-size:12px;color:var(--muted)"></span>
-              <button class="btn btn-accent" onclick="saveEmailContent()">💾 حفظ</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Email Preview -->
-        <div id="email-preview-wrap" style="display:none">
-          <div style="font-size:12px;color:var(--muted);font-weight:600;letter-spacing:1.5px;text-transform:uppercase;text-align:center;margin-bottom:16px;display:flex;align-items:center;gap:8px">
-            <span style="flex:1;height:1px;background:var(--border)"></span>
-            معاينة الإيميل
-            <span style="flex:1;height:1px;background:var(--border)"></span>
-          </div>
-          <div style="background:#f5f4f0;border-radius:12px;overflow:hidden;border:1px solid var(--border2)">
-            <!-- Email mock header -->
-            <div style="background:#1a1a1a;padding:28px 32px;text-align:center">
-              <img id="preview-logo-img" src="" style="height:48px;display:none;margin-bottom:8px;object-fit:contain">
-              <div style="color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.5px">Postak<span style="color:#f5c842">.art</span></div>
-            </div>
-            <!-- Arabic -->
-            <div style="padding:28px 32px 20px;direction:rtl;text-align:right;border-bottom:1px solid #e8e5de;font-family:Arial,sans-serif" id="prev-ar"></div>
-            <!-- English -->
-            <div style="padding:20px 32px 28px;direction:ltr;text-align:left;font-family:Arial,sans-serif;color:#555" id="prev-en"></div>
-            <!-- CTA -->
-            <div style="text-align:center;padding:0 32px 32px">
-              <a href="https://postak.art" style="display:inline-block;background:#1a1a1a;color:#f5c842;padding:13px 32px;border-radius:8px;text-decoration:none;font-weight:700;font-size:14px">ابدأ الآن / Get Started →</a>
-            </div>
-            <!-- Footer -->
-            <div style="background:#eee;padding:16px 32px;text-align:center;font-size:12px;color:#999;font-family:Arial,sans-serif">
-              © <span id="prev-year"></span> Postak.art · hello@postak.art
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-  <!-- ══════════════════════════════════════════════════ -->
-  <!-- PAYMENT SECTION -->
-  <!-- ══════════════════════════════════════════════════ -->
-  <div class="section" id="section-payment">
-    <div class="settings-grid" style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
-
-      <!-- Gateway Selector -->
-      <div class="setting-card">
-        <div class="setting-title">💳 بوابة الدفع النشطة</div>
-        <div class="form-group" style="margin:0">
-          <label>اختر البوابة</label>
-          <select id="payment-gateway" onchange="onGatewayChange(this.value)"
-            style="width:100%;padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;cursor:pointer">
-            <option value="tap">TAP Payments</option>
-            <option value="paytabs">PayTabs</option>
-            <option value="other">أخرى</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Mode Toggle -->
-      <div class="setting-card" style="padding:16px 20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-          <div>
-            <div style="font-size:14px;font-weight:700;color:var(--text)">وضع التشغيل</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">Test = تجريبي بدون دفع حقيقي</div>
-          </div>
-          <div style="display:flex;gap:8px">
-            <button id="mode-test-btn" onclick="setPaymentMode('test')"
-              style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border2);background:var(--accent);color:#000;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
-              🧪 Test
-            </button>
-            <button id="mode-live-btn" onclick="setPaymentMode('live')"
-              style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
-              🚀 Live
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Public Key -->
-      <div class="setting-card">
-        <div class="setting-title">🔑 Public Key <span style="font-size:11px;font-weight:400;color:var(--muted)">(يُخزَّن في Firebase — آمن للعرض)</span></div>
-        <div class="form-group" style="margin-bottom:0">
-          <label id="pub-key-label">TAP — Public Key</label>
-          <div style="display:flex;gap:8px">
-            <input type="text" id="payment-public-key" placeholder="pk_test_xxxxxxxxxxxxxxxx"
-              style="font-family:monospace;font-size:13px;letter-spacing:0.5px;direction:ltr">
-            <button onclick="toggleKeyVisibility('payment-public-key', this)"
-              style="padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0">
-              👁
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Secret Key Warning -->
-      <div class="setting-card" style="background:rgba(251,191,36,0.05);border-color:rgba(251,191,36,0.2)">
-        <div class="setting-title" style="color:var(--yellow)">⚠️ Secret Key — Vercel Only</div>
-        <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">
-          Secret Key لا يُخزَّن هنا أبداً لأسباب أمنية.<br>
-          يُضاف مباشرة في <strong style="color:var(--text)">Vercel → Environment Variables</strong>
-        </p>
-        <div style="background:var(--surface2);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:12px;color:var(--muted);direction:ltr">
-          <div style="color:var(--accent);margin-bottom:4px"># Vercel Environment Variables</div>
-          <div id="secret-key-name">TAP_SECRET_KEY=sk_test_xxxxxxxx</div>
-        </div>
-        <a href="https://vercel.com/dashboard" target="_blank"
-          style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:8px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);text-decoration:none;font-size:13px;font-weight:600">
-          🔗 افتح Vercel Dashboard
-        </a>
-      </div>
-
-      <!-- Additional Config -->
-      <div class="setting-card">
-        <div class="setting-title">⚙️ إعدادات إضافية</div>
-        <div class="form-group">
-          <label>العملة الافتراضية</label>
-          <select id="payment-currency"
-            style="width:100%;padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px">
-            <option value="OMR">OMR — ريال عماني</option>
-            <option value="USD">USD — دولار أمريكي</option>
-            <option value="IQD">IQD — دينار عراقي</option>
-            <option value="KWD">KWD — دينار كويتي</option>
-            <option value="SAR">SAR — ريال سعودي</option>
-            <option value="AED">AED — درهم إماراتي</option>
-          </select>
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label>وصف الدفع (يظهر للمستخدم)</label>
-          <input type="text" id="payment-description" placeholder="اشتراك بوستك Pro">
-        </div>
-      </div>
-
-      <!-- Save -->
-      <div class="setting-card" style="padding:16px 20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-          <span id="payment-last-saved" style="font-size:12px;color:var(--muted)"></span>
-          <div style="display:flex;gap:10px">
-            <button class="btn btn-ghost" onclick="testPaymentConnection()">🧪 اختبار الاتصال</button>
-            <button class="btn btn-accent" onclick="savePaymentSettings()">💾 حفظ</button>
-          </div>
-        </div>
-      </div>
-
-    </div>
   </main>
 </div>
 
@@ -914,8 +684,6 @@ function showSection(id, tab){
   if(id === 'watermark') loadWatermarkSettings();
   if(id === 'feedback') loadFeedback();
   if(id === 'beta') loadBetaSection();
-  if(id === 'email') loadEmailContent();
-  if(id === 'payment') loadPaymentSettings();
 }
 
 // ===== TOAST =====
@@ -1088,7 +856,6 @@ async function loadSettings(){
       if(s.onboardingTutorialLabel) document.getElementById('set-onboard-tutorial-label').value=s.onboardingTutorialLabel;
       if(s.onboardingWebsiteUrl) document.getElementById('set-onboard-website-url').value=s.onboardingWebsiteUrl;
       if(s.onboardingWebsiteLabel) document.getElementById('set-onboard-website-label').value=s.onboardingWebsiteLabel;
-      if(s.iosLottieUrl) document.getElementById('set-ios-lottie-url').value=s.iosLottieUrl;
       if(s.onboardingShows) document.getElementById('set-onboard-shows').value=s.onboardingShows;
       if(s.trialDays !== undefined) document.getElementById('set-trial-days').value = s.trialDays;
       if(s.notice !== undefined) document.getElementById('set-notice').value = s.notice;
@@ -1144,7 +911,6 @@ async function saveOnboardingSettings(){
       onboardingTutorialLabel: document.getElementById('set-onboard-tutorial-label').value,
       onboardingWebsiteUrl: document.getElementById('set-onboard-website-url').value,
       onboardingWebsiteLabel: document.getElementById('set-onboard-website-label').value,
-      iosLottieUrl: document.getElementById('set-ios-lottie-url').value,
       onboardingShows: document.getElementById('set-onboard-shows').value,
     }, {merge:true});
     showToast('✅ تم حفظ إعدادات الترحيب');
@@ -1394,244 +1160,7 @@ async function saveSubMessages(){
   }catch(e){ showToast('❌ '+e.message); }
 }
 
-// ===== EMAIL SECTION =====
-async function loadEmailContent(){
-  try{
-    const doc = await db.collection('cms').doc('welcome-email').get();
-    if(doc.exists){
-      const d = doc.data();
-      document.getElementById('email-subject').value  = d.subject      || '';
-      document.getElementById('email-arabic').value   = d.arabicText   || '';
-      document.getElementById('email-english').value  = d.englishText  || '';
-      document.getElementById('email-logo-url').value = d.logoUrl      || '';
-      const autoT = d.autoTranslate !== false;
-      document.getElementById('auto-translate-toggle').checked = autoT;
-      toggleAutoTranslate(autoT);
-      if(d.logoUrl) previewLogo(d.logoUrl);
-      const ts = d.updatedAt?.toDate?.();
-      if(ts) document.getElementById('email-last-saved').textContent = 'آخر حفظ: ' + ts.toLocaleString('ar-OM');
-    }
-  }catch(e){ showToast('❌ خطأ في تحميل الإيميل: '+e.message); }
-}
-
-function previewLogo(url){
-  const img1 = document.getElementById('email-logo-preview');
-  const img2 = document.getElementById('preview-logo-img');
-  if(url){
-    img1.src = url; img1.style.display='block';
-    img2.src = url; img2.style.display='block';
-  } else {
-    img1.style.display='none'; img2.style.display='none';
-  }
-}
-
-function toggleAutoTranslate(isAuto){
-  const card  = document.getElementById('english-card');
-  const label = document.getElementById('english-label');
-  const ta    = document.getElementById('email-english');
-  if(isAuto){
-    ta.readOnly = true;
-    ta.style.opacity = '0.6';
-    ta.style.cursor  = 'not-allowed';
-    label.innerHTML  = '🌐 النص الإنجليزي <span style="font-size:11px;color:var(--muted);font-weight:400">(مترجم تلقائياً)</span>';
-  } else {
-    ta.readOnly = false;
-    ta.style.opacity = '1';
-    ta.style.cursor  = 'text';
-    label.innerHTML  = '🌐 النص الإنجليزي <span style="font-size:11px;color:var(--accent);font-weight:400">(يدوي)</span>';
-  }
-}
-
-let _translateTimer = null;
-function onArabicInput(){
-  const isAuto = document.getElementById('auto-translate-toggle').checked;
-  if(!isAuto) return;
-  clearTimeout(_translateTimer);
-  _translateTimer = setTimeout(()=>{
-    const txt = document.getElementById('email-arabic').value.trim();
-    if(txt.length > 20) translateNow();
-  }, 2000);
-}
-
-async function translateNow(){
-  const arabic = document.getElementById('email-arabic').value.trim();
-  if(!arabic){ showToast('❌ أدخل النص العربي أولاً'); return; }
-  const status = document.getElementById('translate-status');
-  const btn    = document.getElementById('translate-now-btn');
-  status.textContent = 'جارٍ الترجمة...';
-  btn.disabled = true;
-  try{
-    const res = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        system:'أنت مترجم محترف. ترجم النص التسويقي من العربية إلى الإنجليزية بأسلوب احترافي وودود. أجب فقط بالنص المترجم بدون أي مقدمة أو شرح.',
-        messages:[{role:'user',content:`ترجم النص التالي إلى الإنجليزية مع الحفاظ على الفقرات:\n\n${arabic}`}]
-      })
-    });
-    const data = await res.json();
-    const translated = data?.content?.[0]?.text?.trim() || '';
-    if(!translated) throw new Error('No translation');
-    document.getElementById('email-english').value = translated;
-    status.textContent = '✓ تمت الترجمة';
-    setTimeout(()=>{ status.textContent=''; },3000);
-  }catch(e){
-    status.textContent = '⚠ فشلت الترجمة';
-    showToast('❌ فشلت الترجمة: '+e.message);
-  }
-  btn.disabled = false;
-}
-
-async function saveEmailContent(){
-  const btn = document.querySelector('#section-email .btn-accent');
-  btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
-  const isAuto  = document.getElementById('auto-translate-toggle').checked;
-  const arabic  = document.getElementById('email-arabic').value.trim();
-  let   english = document.getElementById('email-english').value.trim();
-  if(isAuto && arabic && !english){
-    await translateNow();
-    english = document.getElementById('email-english').value.trim();
-  }
-  try{
-    await db.collection('cms').doc('welcome-email').set({
-      subject:       document.getElementById('email-subject').value.trim(),
-      arabicText:    arabic,
-      englishText:   english,
-      logoUrl:       document.getElementById('email-logo-url').value.trim(),
-      autoTranslate: isAuto,
-      updatedAt:     firebase.firestore.FieldValue.serverTimestamp()
-    },{merge:true});
-    showToast('✅ تم حفظ إعدادات الإيميل');
-    document.getElementById('email-last-saved').textContent = 'آخر حفظ: ' + new Date().toLocaleString('ar-OM');
-  }catch(e){ showToast('❌ خطأ: '+e.message); }
-  btn.disabled = false; btn.textContent = '💾 حفظ';
-}
-
-function togglePreview(){
-  const wrap = document.getElementById('email-preview-wrap');
-  const isHidden = wrap.style.display === 'none';
-  if(isHidden){
-    // Update preview content
-    const ar = document.getElementById('email-arabic').value;
-    const en = document.getElementById('email-english').value;
-    document.getElementById('prev-ar').innerHTML = ar.split('\n').map(l=>`<p style="margin-bottom:6px;line-height:1.9;font-size:15px;color:#333">${l||'&nbsp;'}</p>`).join('');
-    document.getElementById('prev-en').innerHTML = en.split('\n').map(l=>`<p style="margin-bottom:6px;line-height:1.8;font-size:14px">${l||'&nbsp;'}</p>`).join('');
-    document.getElementById('prev-year').textContent = new Date().getFullYear();
-    const logoUrl = document.getElementById('email-logo-url').value.trim();
-    const pLogo = document.getElementById('preview-logo-img');
-    if(logoUrl){ pLogo.src=logoUrl; pLogo.style.display='block'; }
-    else { pLogo.style.display='none'; }
-    wrap.style.display = 'block';
-    wrap.scrollIntoView({behavior:'smooth'});
-  } else {
-    wrap.style.display = 'none';
-  }
-}
-
-// ===== PAYMENT SETTINGS =====
-const GATEWAY_CONFIG = {
-  tap:      { label:'TAP Payments',  pubPlaceholder:'pk_test_xxxxxxxxxxxx',      secretVar:'TAP_SECRET_KEY'      },
-  paytabs:  { label:'PayTabs',       pubPlaceholder:'pt_xxxxxxxxxxxxxxxxxxxxxxxx', secretVar:'PAYTABS_SERVER_KEY'  },
-  other:    { label:'Other Gateway', pubPlaceholder:'your_public_key',            secretVar:'PAYMENT_SECRET_KEY'  },
-};
-
-let _paymentMode = 'test';
-
-function onGatewayChange(gw) {
-  const cfg = GATEWAY_CONFIG[gw] || GATEWAY_CONFIG.tap;
-  document.getElementById('pub-key-label').textContent = cfg.label + ' — Public Key';
-  document.getElementById('payment-public-key').placeholder = cfg.pubPlaceholder;
-  document.getElementById('secret-key-name').textContent = cfg.secretVar + '=sk_test_xxxxxxxx';
-}
-
-function setPaymentMode(mode) {
-  _paymentMode = mode;
-  const testBtn = document.getElementById('mode-test-btn');
-  const liveBtn = document.getElementById('mode-live-btn');
-  if (mode === 'test') {
-    testBtn.style.background = 'var(--accent)'; testBtn.style.color = '#000';
-    liveBtn.style.background = 'var(--surface2)'; liveBtn.style.color = 'var(--muted)';
-  } else {
-    liveBtn.style.background = '#f87171'; liveBtn.style.color = '#fff';
-    testBtn.style.background = 'var(--surface2)'; testBtn.style.color = 'var(--muted)';
-  }
-}
-
-function toggleKeyVisibility(inputId, btn) {
-  const input = document.getElementById(inputId);
-  if (input.type === 'password') { input.type = 'text';  btn.textContent = '🙈'; }
-  else                           { input.type = 'password'; btn.textContent = '👁'; }
-}
-
-async function loadPaymentSettings() {
-  try {
-    const doc = await db.collection('cms').doc('payment-settings').get();
-    if (doc.exists) {
-      const d = doc.data();
-      document.getElementById('payment-gateway').value    = d.gateway    || 'tap';
-      document.getElementById('payment-public-key').value = d.publicKey  || '';
-      document.getElementById('payment-currency').value   = d.currency   || 'OMR';
-      document.getElementById('payment-description').value= d.description|| '';
-      _paymentMode = d.mode || 'test';
-      setPaymentMode(_paymentMode);
-      onGatewayChange(d.gateway || 'tap');
-      const ts = d.updatedAt?.toDate?.();
-      if (ts) document.getElementById('payment-last-saved').textContent = 'آخر حفظ: ' + ts.toLocaleString('ar-OM');
-    }
-  } catch(e) { showToast('❌ خطأ في تحميل إعدادات الدفع: ' + e.message); }
-}
-
-async function savePaymentSettings() {
-  const btn = document.querySelector('#section-payment .btn-accent');
-  btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
-  try {
-    await db.collection('cms').doc('payment-settings').set({
-      gateway:     document.getElementById('payment-gateway').value,
-      publicKey:   document.getElementById('payment-public-key').value.trim(),
-      currency:    document.getElementById('payment-currency').value,
-      description: document.getElementById('payment-description').value.trim(),
-      mode:        _paymentMode,
-      updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
-    }, { merge: true });
-    showToast('✅ تم حفظ إعدادات الدفع');
-    document.getElementById('payment-last-saved').textContent = 'آخر حفظ: ' + new Date().toLocaleString('ar-OM');
-  } catch(e) { showToast('❌ خطأ: ' + e.message); }
-  btn.disabled = false; btn.textContent = '💾 حفظ';
-}
-
-async function testPaymentConnection() {
-  const resultWrap = document.getElementById('payment-test-result');
-  const resultEl   = document.getElementById('payment-test-content');
-  const pubKey     = document.getElementById('payment-public-key').value.trim();
-  const gateway    = document.getElementById('payment-gateway').value;
-
-  if (!pubKey) { showToast('❌ أدخل Public Key أولاً'); return; }
-
-  resultWrap.style.display = 'block';
-  resultEl.innerHTML = '<span style="color:var(--muted)">⏳ جارٍ الاختبار...</span>';
-
-  try {
-    let ok = false;
-    if (gateway === 'tap') {
-      // TAP public key validation — check format
-      ok = pubKey.startsWith('pk_test_') || pubKey.startsWith('pk_live_');
-      resultEl.innerHTML = ok
-        ? `<span style="color:var(--green)">✅ Public Key صيغته صحيحة (TAP ${_paymentMode} mode)</span><br><small style="color:var(--muted)">لاختبار الاتصال الكامل يحتاج Secret Key في Vercel</small>`
-        : `<span style="color:var(--red)">❌ Public Key غير صحيح — يجب أن يبدأ بـ pk_test_ أو pk_live_</span>`;
-    } else {
-      ok = pubKey.length > 10;
-      resultEl.innerHTML = ok
-        ? `<span style="color:var(--green)">✅ Public Key مدخل (${gateway} ${_paymentMode} mode)</span>`
-        : `<span style="color:var(--red)">❌ Public Key قصير جداً</span>`;
-    }
-  } catch(e) {
-    resultEl.innerHTML = `<span style="color:var(--red)">❌ خطأ: ${e.message}</span>`;
-  }
-}
-
-
+async function loadBetaStats(){
   const el = document.getElementById('beta-stats');
   if(!el) return;
   try{
