@@ -270,6 +270,7 @@ select option{background:var(--surface2)}
     <div class="nav-tab" onclick="showSection('beta',this)">🚀 وضع Beta</div>
     <div class="nav-tab" onclick="showSection('settings',this)">⚙️ الإعدادات</div>
     <div class="nav-tab" onclick="showSection('email',this)">📧 الإيميل الترحيبي</div>
+    <div class="nav-tab" onclick="showSection('payment',this)">💳 بوابة الدفع</div>
   </nav>
 
   <main>
@@ -740,6 +741,112 @@ select option{background:var(--surface2)}
       </div>
     </div>
 
+  <!-- ══════════════════════════════════════════════════ -->
+  <!-- PAYMENT SECTION -->
+  <!-- ══════════════════════════════════════════════════ -->
+  <div class="section" id="section-payment">
+    <div class="settings-grid" style="max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:16px">
+
+      <!-- Gateway Selector -->
+      <div class="setting-card">
+        <div class="setting-title">💳 بوابة الدفع النشطة</div>
+        <div class="form-group" style="margin:0">
+          <label>اختر البوابة</label>
+          <select id="payment-gateway" onchange="onGatewayChange(this.value)"
+            style="width:100%;padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px;cursor:pointer">
+            <option value="tap">TAP Payments</option>
+            <option value="paytabs">PayTabs</option>
+            <option value="other">أخرى</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Mode Toggle -->
+      <div class="setting-card" style="padding:16px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="font-size:14px;font-weight:700;color:var(--text)">وضع التشغيل</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">Test = تجريبي بدون دفع حقيقي</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button id="mode-test-btn" onclick="setPaymentMode('test')"
+              style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border2);background:var(--accent);color:#000;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
+              🧪 Test
+            </button>
+            <button id="mode-live-btn" onclick="setPaymentMode('live')"
+              style="padding:8px 20px;border-radius:8px;border:1.5px solid var(--border2);background:var(--surface2);color:var(--muted);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer">
+              🚀 Live
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Public Key -->
+      <div class="setting-card">
+        <div class="setting-title">🔑 Public Key <span style="font-size:11px;font-weight:400;color:var(--muted)">(يُخزَّن في Firebase — آمن للعرض)</span></div>
+        <div class="form-group" style="margin-bottom:0">
+          <label id="pub-key-label">TAP — Public Key</label>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="payment-public-key" placeholder="pk_test_xxxxxxxxxxxxxxxx"
+              style="font-family:monospace;font-size:13px;letter-spacing:0.5px;direction:ltr">
+            <button onclick="toggleKeyVisibility('payment-public-key', this)"
+              style="padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0">
+              👁
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secret Key Warning -->
+      <div class="setting-card" style="background:rgba(251,191,36,0.05);border-color:rgba(251,191,36,0.2)">
+        <div class="setting-title" style="color:var(--yellow)">⚠️ Secret Key — Vercel Only</div>
+        <p style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">
+          Secret Key لا يُخزَّن هنا أبداً لأسباب أمنية.<br>
+          يُضاف مباشرة في <strong style="color:var(--text)">Vercel → Environment Variables</strong>
+        </p>
+        <div style="background:var(--surface2);border-radius:8px;padding:12px 16px;font-family:monospace;font-size:12px;color:var(--muted);direction:ltr">
+          <div style="color:var(--accent);margin-bottom:4px"># Vercel Environment Variables</div>
+          <div id="secret-key-name">TAP_SECRET_KEY=sk_test_xxxxxxxx</div>
+        </div>
+        <a href="https://vercel.com/dashboard" target="_blank"
+          style="display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:8px 16px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;color:var(--text);text-decoration:none;font-size:13px;font-weight:600">
+          🔗 افتح Vercel Dashboard
+        </a>
+      </div>
+
+      <!-- Additional Config -->
+      <div class="setting-card">
+        <div class="setting-title">⚙️ إعدادات إضافية</div>
+        <div class="form-group">
+          <label>العملة الافتراضية</label>
+          <select id="payment-currency"
+            style="width:100%;padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border2);border-radius:8px;color:var(--text);font-family:inherit;font-size:14px">
+            <option value="OMR">OMR — ريال عماني</option>
+            <option value="USD">USD — دولار أمريكي</option>
+            <option value="IQD">IQD — دينار عراقي</option>
+            <option value="KWD">KWD — دينار كويتي</option>
+            <option value="SAR">SAR — ريال سعودي</option>
+            <option value="AED">AED — درهم إماراتي</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>وصف الدفع (يظهر للمستخدم)</label>
+          <input type="text" id="payment-description" placeholder="اشتراك بوستك Pro">
+        </div>
+      </div>
+
+      <!-- Save -->
+      <div class="setting-card" style="padding:16px 20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+          <span id="payment-last-saved" style="font-size:12px;color:var(--muted)"></span>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-ghost" onclick="testPaymentConnection()">🧪 اختبار الاتصال</button>
+            <button class="btn btn-accent" onclick="savePaymentSettings()">💾 حفظ</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </main>
 </div>
 
@@ -808,6 +915,7 @@ function showSection(id, tab){
   if(id === 'feedback') loadFeedback();
   if(id === 'beta') loadBetaSection();
   if(id === 'email') loadEmailContent();
+  if(id === 'payment') loadPaymentSettings();
 }
 
 // ===== TOAST =====
@@ -1422,7 +1530,108 @@ function togglePreview(){
   }
 }
 
-async function loadBetaStats(){
+// ===== PAYMENT SETTINGS =====
+const GATEWAY_CONFIG = {
+  tap:      { label:'TAP Payments',  pubPlaceholder:'pk_test_xxxxxxxxxxxx',      secretVar:'TAP_SECRET_KEY'      },
+  paytabs:  { label:'PayTabs',       pubPlaceholder:'pt_xxxxxxxxxxxxxxxxxxxxxxxx', secretVar:'PAYTABS_SERVER_KEY'  },
+  other:    { label:'Other Gateway', pubPlaceholder:'your_public_key',            secretVar:'PAYMENT_SECRET_KEY'  },
+};
+
+let _paymentMode = 'test';
+
+function onGatewayChange(gw) {
+  const cfg = GATEWAY_CONFIG[gw] || GATEWAY_CONFIG.tap;
+  document.getElementById('pub-key-label').textContent = cfg.label + ' — Public Key';
+  document.getElementById('payment-public-key').placeholder = cfg.pubPlaceholder;
+  document.getElementById('secret-key-name').textContent = cfg.secretVar + '=sk_test_xxxxxxxx';
+}
+
+function setPaymentMode(mode) {
+  _paymentMode = mode;
+  const testBtn = document.getElementById('mode-test-btn');
+  const liveBtn = document.getElementById('mode-live-btn');
+  if (mode === 'test') {
+    testBtn.style.background = 'var(--accent)'; testBtn.style.color = '#000';
+    liveBtn.style.background = 'var(--surface2)'; liveBtn.style.color = 'var(--muted)';
+  } else {
+    liveBtn.style.background = '#f87171'; liveBtn.style.color = '#fff';
+    testBtn.style.background = 'var(--surface2)'; testBtn.style.color = 'var(--muted)';
+  }
+}
+
+function toggleKeyVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text';  btn.textContent = '🙈'; }
+  else                           { input.type = 'password'; btn.textContent = '👁'; }
+}
+
+async function loadPaymentSettings() {
+  try {
+    const doc = await db.collection('cms').doc('payment-settings').get();
+    if (doc.exists) {
+      const d = doc.data();
+      document.getElementById('payment-gateway').value    = d.gateway    || 'tap';
+      document.getElementById('payment-public-key').value = d.publicKey  || '';
+      document.getElementById('payment-currency').value   = d.currency   || 'OMR';
+      document.getElementById('payment-description').value= d.description|| '';
+      _paymentMode = d.mode || 'test';
+      setPaymentMode(_paymentMode);
+      onGatewayChange(d.gateway || 'tap');
+      const ts = d.updatedAt?.toDate?.();
+      if (ts) document.getElementById('payment-last-saved').textContent = 'آخر حفظ: ' + ts.toLocaleString('ar-OM');
+    }
+  } catch(e) { showToast('❌ خطأ في تحميل إعدادات الدفع: ' + e.message); }
+}
+
+async function savePaymentSettings() {
+  const btn = document.querySelector('#section-payment .btn-accent');
+  btn.disabled = true; btn.textContent = 'جارٍ الحفظ...';
+  try {
+    await db.collection('cms').doc('payment-settings').set({
+      gateway:     document.getElementById('payment-gateway').value,
+      publicKey:   document.getElementById('payment-public-key').value.trim(),
+      currency:    document.getElementById('payment-currency').value,
+      description: document.getElementById('payment-description').value.trim(),
+      mode:        _paymentMode,
+      updatedAt:   firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+    showToast('✅ تم حفظ إعدادات الدفع');
+    document.getElementById('payment-last-saved').textContent = 'آخر حفظ: ' + new Date().toLocaleString('ar-OM');
+  } catch(e) { showToast('❌ خطأ: ' + e.message); }
+  btn.disabled = false; btn.textContent = '💾 حفظ';
+}
+
+async function testPaymentConnection() {
+  const resultWrap = document.getElementById('payment-test-result');
+  const resultEl   = document.getElementById('payment-test-content');
+  const pubKey     = document.getElementById('payment-public-key').value.trim();
+  const gateway    = document.getElementById('payment-gateway').value;
+
+  if (!pubKey) { showToast('❌ أدخل Public Key أولاً'); return; }
+
+  resultWrap.style.display = 'block';
+  resultEl.innerHTML = '<span style="color:var(--muted)">⏳ جارٍ الاختبار...</span>';
+
+  try {
+    let ok = false;
+    if (gateway === 'tap') {
+      // TAP public key validation — check format
+      ok = pubKey.startsWith('pk_test_') || pubKey.startsWith('pk_live_');
+      resultEl.innerHTML = ok
+        ? `<span style="color:var(--green)">✅ Public Key صيغته صحيحة (TAP ${_paymentMode} mode)</span><br><small style="color:var(--muted)">لاختبار الاتصال الكامل يحتاج Secret Key في Vercel</small>`
+        : `<span style="color:var(--red)">❌ Public Key غير صحيح — يجب أن يبدأ بـ pk_test_ أو pk_live_</span>`;
+    } else {
+      ok = pubKey.length > 10;
+      resultEl.innerHTML = ok
+        ? `<span style="color:var(--green)">✅ Public Key مدخل (${gateway} ${_paymentMode} mode)</span>`
+        : `<span style="color:var(--red)">❌ Public Key قصير جداً</span>`;
+    }
+  } catch(e) {
+    resultEl.innerHTML = `<span style="color:var(--red)">❌ خطأ: ${e.message}</span>`;
+  }
+}
+
+
   const el = document.getElementById('beta-stats');
   if(!el) return;
   try{
