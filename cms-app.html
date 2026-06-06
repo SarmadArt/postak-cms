@@ -260,6 +260,7 @@ select option{background:var(--surface2)}
     <div class="nav-tab" onclick="showSection('watermark',this)">💧 Watermark</div>
     <div class="nav-tab" onclick="showSection('feedback',this)">💬 الملاحظات</div>
     <div class="nav-tab" onclick="showSection('beta',this)">🚀 وضع Beta</div>
+    <div class="nav-tab" onclick="showSection('subscriptions',this)">💎 الاشتراكات</div>
     <div class="nav-tab" onclick="showSection('payment',this)">💳 الدفع</div>
     <div class="nav-tab" onclick="showSection('settings',this)">⚙️ الإعدادات</div>
   </nav>
@@ -508,6 +509,92 @@ select option{background:var(--surface2)}
           <button class="btn btn-ghost" style="margin-top:12px" onclick="loadBetaStats()">🔄 تحديث</button>
         </div>
       </div>
+    </div>
+
+    <!-- SUBSCRIPTIONS -->
+    <div class="section" id="section-subscriptions">
+
+      <!-- إضافة اشتراك يدوي -->
+      <div class="form-card" style="border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.04);margin-bottom:20px">
+        <div class="form-title">➕ إضافة / تمديد اشتراك يدوي</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.7">
+          استخدم هذا لإضافة اشتراك لمستخدم يدوياً — مثلاً في حالة خطأ تقني أو منح Pro مجاني.
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>إيميل المستخدم</label>
+            <input type="email" id="sub-email" placeholder="user@example.com" dir="ltr" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label>نوع الخطة</label>
+            <select id="sub-plan">
+              <option value="monthly">شهري</option>
+              <option value="yearly">سنوي</option>
+              <option value="lifetime">مدى الحياة</option>
+              <option value="gift">هدية / مجاني</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>تاريخ الانتهاء</label>
+            <input type="date" id="sub-expiry">
+          </div>
+          <div class="form-group">
+            <label>ملاحظة (اختياري)</label>
+            <input type="text" id="sub-note" placeholder="مثال: تعويض خطأ تقني">
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px">
+          <button class="btn btn-purple" onclick="addManualSubscription()">💎 إضافة الاشتراك</button>
+          <button class="btn btn-ghost" onclick="subSetExpiry(30)">+30 يوم</button>
+          <button class="btn btn-ghost" onclick="subSetExpiry(90)">+90 يوم</button>
+          <button class="btn btn-ghost" onclick="subSetExpiry(365)">+سنة</button>
+          <button class="btn btn-ghost" onclick="subSetExpiry(36500)">♾️ مدى الحياة</button>
+        </div>
+        <div id="sub-add-result" style="margin-top:12px;font-size:12px;display:none;padding:10px;border-radius:8px"></div>
+      </div>
+
+      <!-- بحث -->
+      <div class="form-card" style="margin-bottom:20px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <input type="text" id="sub-search" placeholder="ابحث بالإيميل..." dir="ltr" style="flex:1" oninput="filterSubsTable()">
+          <select id="sub-filter-status" onchange="filterSubsTable()" style="width:140px">
+            <option value="all">الكل</option>
+            <option value="active">نشط ✅</option>
+            <option value="expired">منتهي ⏰</option>
+            <option value="cancelled">ملغي ❌</option>
+          </select>
+          <button class="btn btn-ghost" onclick="loadSubscriptions()">🔄 تحديث</button>
+        </div>
+      </div>
+
+      <!-- إحصائيات سريعة -->
+      <div class="stats-row" style="margin-bottom:20px">
+        <div class="stat-card"><div class="stat-icon">💎</div><div class="stat-num" id="sub-stat-active">—</div><div class="stat-label">اشتراكات نشطة</div></div>
+        <div class="stat-card"><div class="stat-icon">⏰</div><div class="stat-num" id="sub-stat-expired">—</div><div class="stat-label">منتهية</div></div>
+        <div class="stat-card"><div class="stat-icon">🎁</div><div class="stat-num" id="sub-stat-manual">—</div><div class="stat-label">يدوية / هدايا</div></div>
+        <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-num" id="sub-stat-expiring">—</div><div class="stat-label">تنتهي خلال 7 أيام</div></div>
+      </div>
+
+      <!-- جدول الاشتراكات -->
+      <div class="table-wrap">
+        <div class="table-header">
+          <div class="table-title">💎 جميع الاشتراكات</div>
+          <div style="font-size:11px;color:var(--muted)">الحذف soft — البيانات محفوظة دائماً</div>
+        </div>
+        <div id="subs-table"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+
+      <!-- سجل العمليات -->
+      <div class="table-wrap" style="margin-top:20px">
+        <div class="table-header">
+          <div class="table-title">📋 سجل العمليات اليدوية</div>
+          <button class="btn btn-ghost" onclick="loadSubLogs()" style="font-size:11px">🔄</button>
+        </div>
+        <div id="sub-logs-table"><div class="loading"><div class="spinner"></div>جاري التحميل...</div></div>
+      </div>
+
     </div>
 
     <!-- PAYMENT GATEWAY -->
@@ -877,6 +964,7 @@ auth.onAuthStateChanged(user => {
     document.getElementById('app').classList.add('visible');
     document.getElementById('user-name').textContent = user.displayName || user.email;
     if(user.photoURL) document.getElementById('user-avatar').src = user.photoURL;
+    currentAdminEmail = user.email;
     loadDashboard();
   } else {
     document.getElementById('login-screen').style.display = 'flex';
@@ -898,6 +986,7 @@ function showSection(id, tab){
   if(id === 'feedback') loadFeedback();
   if(id === 'beta') loadBetaSection();
   if(id === 'payment') loadPaymentSection();
+  if(id === 'subscriptions'){ loadSubscriptions(); loadSubLogs(); }
 }
 
 // ===== TOAST =====
@@ -1525,7 +1614,351 @@ async function deleteFeedback(id){
   }catch(e){ showToast('❌ '+e.message); }
 }
 
-// ===== BETA MODE =====
+
+// ===== SUBSCRIPTIONS =====
+
+let _allSubs = [];
+
+// تعيين تاريخ انتهاء سريع
+function subSetExpiry(days) {
+  const d = new Date();
+  if (days >= 36500) {
+    document.getElementById('sub-expiry').value = '2099-12-31';
+    document.getElementById('sub-plan').value = 'lifetime';
+  } else {
+    d.setDate(d.getDate() + days);
+    document.getElementById('sub-expiry').value = d.toISOString().split('T')[0];
+  }
+}
+
+// إضافة اشتراك يدوي
+async function addManualSubscription() {
+  const email   = document.getElementById('sub-email').value.trim();
+  const plan    = document.getElementById('sub-plan').value;
+  const expiry  = document.getElementById('sub-expiry').value;
+  const note    = document.getElementById('sub-note').value.trim();
+  const resultEl = document.getElementById('sub-add-result');
+
+  if (!email || !expiry) {
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(248,113,113,0.1)';
+    resultEl.style.border = '1px solid rgba(248,113,113,0.2)';
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = '❌ يرجى إدخال الإيميل وتاريخ الانتهاء';
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري...';
+
+  try {
+    // 1. جيب الـ user_id من Supabase بالإيميل
+    const { data: users, error: uErr } = await sbClient
+      .from('users')
+      .select('id, email')
+      .eq('email', email)
+      .limit(1);
+
+    let userId = null;
+    if (!uErr && users && users.length > 0) {
+      userId = users[0].id;
+    }
+
+    const expiryDate = new Date(expiry + 'T23:59:59Z').toISOString();
+    const now = new Date().toISOString();
+
+    // 2. تحقق إذا يوجد اشتراك — update أو insert
+    const { data: existing } = await sbClient
+      .from('subscriptions')
+      .select('id')
+      .eq('user_email', email)
+      .not('status', 'eq', 'cancelled')
+      .limit(1);
+
+    let subError;
+    if (existing && existing.length > 0) {
+      // تمديد الموجود
+      const { error } = await sbClient
+        .from('subscriptions')
+        .update({
+          plan,
+          status: 'active',
+          expires_at: expiryDate,
+          updated_at: now,
+          note: note || null,
+          is_manual: true
+        })
+        .eq('id', existing[0].id);
+      subError = error;
+    } else {
+      // إضافة جديد
+      const { error } = await sbClient
+        .from('subscriptions')
+        .insert({
+          user_id:    userId,
+          user_email: email,
+          plan,
+          status:     'active',
+          starts_at:  now,
+          expires_at: expiryDate,
+          is_manual:  true,
+          note:       note || null,
+          created_at: now,
+          updated_at: now
+        });
+      subError = error;
+    }
+
+    if (subError) throw subError;
+
+    // 3. سجّل العملية في Firebase
+    await db.collection('subscription_logs').add({
+      action:  existing && existing.length > 0 ? 'extend_manual' : 'add_manual',
+      email,
+      plan,
+      expiry,
+      note:    note || '',
+      by:      currentAdminEmail || 'admin',
+      at:      firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    // نجاح
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(74,222,128,0.1)';
+    resultEl.style.border = '1px solid rgba(74,222,128,0.2)';
+    resultEl.style.color = 'var(--green)';
+    resultEl.textContent = '✅ تم ' + (existing && existing.length > 0 ? 'تمديد' : 'إضافة') + ' اشتراك ' + email + ' حتى ' + expiry;
+
+    // مسح الحقول
+    document.getElementById('sub-email').value = '';
+    document.getElementById('sub-expiry').value = '';
+    document.getElementById('sub-note').value = '';
+
+    showToast('✅ تم إضافة الاشتراك');
+    loadSubscriptions();
+    loadSubLogs();
+
+  } catch(e) {
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(248,113,113,0.1)';
+    resultEl.style.border = '1px solid rgba(248,113,113,0.2)';
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = '❌ خطأ: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '💎 إضافة الاشتراك';
+  }
+}
+
+// تحميل كل الاشتراكات
+async function loadSubscriptions() {
+  const wrap = document.getElementById('subs-table');
+  wrap.innerHTML = '<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
+  try {
+    const { data, error } = await sbClient
+      .from('subscriptions')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(200);
+
+    if (error) throw error;
+    _allSubs = data || [];
+    renderSubsTable(_allSubs);
+    updateSubStats(_allSubs);
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty" style="color:var(--muted)">'
+      + '<div class="empty-icon">⚠️</div>تعذر التحميل: ' + e.message
+      + '<br><small style="font-size:11px;margin-top:8px;display:block">تأكد من وجود جدول subscriptions في Supabase مع الأعمدة: user_email, plan, status, expires_at, is_manual, note</small>'
+      + '</div>';
+  }
+}
+
+// رسم جدول الاشتراكات
+function renderSubsTable(data) {
+  const wrap = document.getElementById('subs-table');
+  if (!data || !data.length) {
+    wrap.innerHTML = '<div class="empty"><div class="empty-icon">💎</div>لا توجد اشتراكات بعد</div>';
+    return;
+  }
+  const now = new Date();
+  wrap.innerHTML = '<table><thead><tr>'
+    + '<th>الإيميل</th><th>الخطة</th><th>الحالة</th><th>الانتهاء</th><th>النوع</th><th>ملاحظة</th><th>إجراء</th>'
+    + '</tr></thead><tbody>'
+    + data.map(s => {
+        const exp = s.expires_at ? new Date(s.expires_at) : null;
+        const isExpired = exp && exp < now;
+        const daysLeft = exp ? Math.ceil((exp - now) / (1000*60*60*24)) : null;
+        const expStr = exp ? exp.toLocaleDateString('ar-IQ') : '—';
+
+        let statusBadge;
+        if (s.status === 'cancelled') {
+          statusBadge = '<span class="badge badge-inactive">❌ ملغي</span>';
+        } else if (isExpired) {
+          statusBadge = '<span class="badge" style="background:rgba(251,191,36,0.1);color:#fbbf24;border:1px solid rgba(251,191,36,0.2)">⏰ منتهي</span>';
+        } else {
+          statusBadge = '<span class="badge badge-active">✅ نشط</span>';
+        }
+
+        const planLabels = { monthly:'شهري', yearly:'سنوي', lifetime:'مدى الحياة', gift:'هدية' };
+        const planLabel = planLabels[s.plan] || s.plan || '—';
+
+        const expiryCell = exp
+          ? (isExpired
+              ? '<span style="color:var(--red)">' + expStr + '</span>'
+              : (daysLeft <= 7
+                  ? '<span style="color:#fbbf24">' + expStr + ' (' + daysLeft + ' يوم)</span>'
+                  : expStr))
+          : '♾️';
+
+        const manualBadge = s.is_manual
+          ? '<span style="font-size:10px;padding:2px 7px;background:rgba(167,139,250,0.15);color:var(--accent2);border-radius:20px;border:1px solid rgba(167,139,250,0.2)">يدوي</span>'
+          : '<span style="font-size:10px;padding:2px 7px;background:rgba(45,212,191,0.1);color:var(--accent);border-radius:20px;border:1px solid rgba(45,212,191,0.2)">تلقائي</span>';
+
+        const actions = s.status !== 'cancelled'
+          ? '<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;margin-left:4px" onclick="extendSub(\'' + s.id + '\',\'' + (s.user_email||'') + '\')">⏩ تمديد</button>'
+            + '<button class="btn btn-danger" style="font-size:11px;padding:4px 8px" onclick="cancelSub(\'' + s.id + '\',\'' + (s.user_email||'') + '\')">❌ إلغاء</button>'
+          : '<button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="restoreSub(\'' + s.id + '\',\'' + (s.user_email||'') + '\')">♻️ استعادة</button>';
+
+        return '<tr>'
+          + '<td style="direction:ltr;text-align:right;font-size:12px">' + (s.user_email||'—') + '</td>'
+          + '<td>' + planLabel + '</td>'
+          + '<td>' + statusBadge + '</td>'
+          + '<td style="font-size:12px">' + expiryCell + '</td>'
+          + '<td>' + manualBadge + '</td>'
+          + '<td style="color:var(--muted);font-size:11px;max-width:140px">' + (s.note||'—') + '</td>'
+          + '<td style="white-space:nowrap">' + actions + '</td>'
+          + '</tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+
+// فلترة الجدول
+function filterSubsTable() {
+  const q = document.getElementById('sub-search').value.trim().toLowerCase();
+  const status = document.getElementById('sub-filter-status').value;
+  const now = new Date();
+
+  const filtered = _allSubs.filter(s => {
+    const matchEmail = !q || (s.user_email||'').toLowerCase().includes(q);
+    let matchStatus = true;
+    if (status === 'active') matchStatus = s.status !== 'cancelled' && (!s.expires_at || new Date(s.expires_at) >= now);
+    if (status === 'expired') matchStatus = s.status !== 'cancelled' && s.expires_at && new Date(s.expires_at) < now;
+    if (status === 'cancelled') matchStatus = s.status === 'cancelled';
+    return matchEmail && matchStatus;
+  });
+  renderSubsTable(filtered);
+}
+
+// إحصائيات
+function updateSubStats(data) {
+  const now = new Date();
+  const in7 = new Date(); in7.setDate(in7.getDate() + 7);
+  let active=0, expired=0, manual=0, expiring=0;
+  (data||[]).forEach(s => {
+    if (s.status === 'cancelled') return;
+    const exp = s.expires_at ? new Date(s.expires_at) : null;
+    if (!exp || exp >= now) { active++; } else { expired++; }
+    if (s.is_manual) manual++;
+    if (exp && exp >= now && exp <= in7) expiring++;
+  });
+  document.getElementById('sub-stat-active').textContent   = active;
+  document.getElementById('sub-stat-expired').textContent  = expired;
+  document.getElementById('sub-stat-manual').textContent   = manual;
+  document.getElementById('sub-stat-expiring').textContent = expiring;
+}
+
+// تمديد اشتراك
+async function extendSub(id, email) {
+  const days = prompt('كم يوم تمدد اشتراك ' + email + '؟ (مثال: 30)');
+  if (!days || isNaN(days)) return;
+  try {
+    const { data: sub, error: fetchErr } = await sbClient.from('subscriptions').select('expires_at').eq('id', id).single();
+    if (fetchErr) throw fetchErr;
+    const base = sub.expires_at && new Date(sub.expires_at) > new Date() ? new Date(sub.expires_at) : new Date();
+    base.setDate(base.getDate() + parseInt(days));
+    const { error } = await sbClient.from('subscriptions').update({
+      expires_at: base.toISOString(), status: 'active', updated_at: new Date().toISOString()
+    }).eq('id', id);
+    if (error) throw error;
+    await db.collection('subscription_logs').add({
+      action: 'extend_manual', email, days: parseInt(days), new_expiry: base.toISOString(),
+      by: currentAdminEmail || 'admin', at: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('✅ تم تمديد الاشتراك ' + parseInt(days) + ' يوم');
+    loadSubscriptions();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// إلغاء اشتراك (soft — مو حذف)
+async function cancelSub(id, email) {
+  if (!confirm('إلغاء اشتراك ' + email + '؟\n\nالبيانات ستبقى محفوظة ويمكن استعادتها.')) return;
+  try {
+    const { error } = await sbClient.from('subscriptions').update({
+      status: 'cancelled', updated_at: new Date().toISOString()
+    }).eq('id', id);
+    if (error) throw error;
+    await db.collection('subscription_logs').add({
+      action: 'cancel_manual', email,
+      by: currentAdminEmail || 'admin', at: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('✅ تم إلغاء الاشتراك — البيانات محفوظة');
+    loadSubscriptions();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// استعادة اشتراك ملغي
+async function restoreSub(id, email) {
+  const days = prompt('استعادة اشتراك ' + email + '\nكم يوم تضيف من اليوم؟');
+  if (!days || isNaN(days)) return;
+  try {
+    const exp = new Date();
+    exp.setDate(exp.getDate() + parseInt(days));
+    const { error } = await sbClient.from('subscriptions').update({
+      status: 'active', expires_at: exp.toISOString(), updated_at: new Date().toISOString(), is_manual: true
+    }).eq('id', id);
+    if (error) throw error;
+    await db.collection('subscription_logs').add({
+      action: 'restore_manual', email, days: parseInt(days),
+      by: currentAdminEmail || 'admin', at: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('♻️ تم استعادة الاشتراك');
+    loadSubscriptions();
+  } catch(e) { showToast('❌ ' + e.message); }
+}
+
+// سجل العمليات
+async function loadSubLogs() {
+  const wrap = document.getElementById('sub-logs-table');
+  wrap.innerHTML = '<div class="loading"><div class="spinner"></div>جاري التحميل...</div>';
+  try {
+    const snap = await db.collection('subscription_logs').orderBy('at','desc').limit(30).get();
+    if (snap.empty) { wrap.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>لا توجد سجلات بعد</div>'; return; }
+    const actionLabels = {
+      add_manual: '➕ إضافة يدوية', extend_manual: '⏩ تمديد', cancel_manual: '❌ إلغاء', restore_manual: '♻️ استعادة'
+    };
+    wrap.innerHTML = '<table><thead><tr><th>العملية</th><th>الإيميل</th><th>التفاصيل</th><th>بواسطة</th><th>التاريخ</th></tr></thead><tbody>'
+      + snap.docs.map(doc => {
+          const l = doc.data();
+          const date = l.at ? new Date(l.at.seconds*1000).toLocaleString('ar-IQ') : '—';
+          const detail = l.days ? ('+' + l.days + ' يوم') : (l.expiry || l.plan || '');
+          return '<tr>'
+            + '<td><strong>' + (actionLabels[l.action] || l.action) + '</strong></td>'
+            + '<td style="direction:ltr;text-align:right;font-size:12px">' + (l.email||'—') + '</td>'
+            + '<td style="color:var(--muted);font-size:12px">' + detail + '</td>'
+            + '<td style="color:var(--muted);font-size:11px">' + (l.by||'—') + '</td>'
+            + '<td style="color:var(--muted);font-size:11px;direction:ltr;text-align:right">' + date + '</td>'
+            + '</tr>';
+        }).join('')
+      + '</tbody></table>';
+  } catch(e) {
+    wrap.innerHTML = '<div class="empty" style="color:var(--muted)"><div class="empty-icon">📋</div>لا توجد سجلات بعد<br><small>ستظهر هنا بعد أول عملية يدوية</small></div>';
+  }
+}
+
+let currentAdminEmail = '';
+
+
 async function loadBetaSection(){
   try{
     const doc = await db.collection('settings').doc('beta').get();
