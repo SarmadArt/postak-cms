@@ -301,6 +301,37 @@ select option{background:var(--surface2)}
 
     <!-- USERS -->
     <div class="section" id="section-users">
+
+      <!-- منح Pro سريع -->
+      <div class="form-card" style="margin-bottom:20px;border-color:rgba(167,139,250,0.3);background:rgba(167,139,250,0.04)">
+        <div class="form-title">🎁 منح اشتراك Pro</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+          للفائزين بالحملات أو التعويضات — أدخل الإيميل واختر المدة وأضغط منح.
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+          <div class="form-group" style="flex:2;min-width:200px;margin:0">
+            <label>إيميل المستخدم</label>
+            <input type="email" id="quick-grant-email" placeholder="winner@example.com" dir="ltr" autocomplete="off">
+          </div>
+          <div class="form-group" style="flex:1;min-width:130px;margin:0">
+            <label>المدة</label>
+            <select id="quick-grant-duration">
+              <option value="30">30 يوم</option>
+              <option value="90">90 يوم</option>
+              <option value="180">6 أشهر</option>
+              <option value="365">سنة كاملة</option>
+              <option value="36500">♾️ مدى الحياة</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;min-width:130px;margin:0">
+            <label>السبب (اختياري)</label>
+            <input type="text" id="quick-grant-note" placeholder="مثال: فائز حملة يونيو">
+          </div>
+          <button class="btn btn-purple" style="height:38px;white-space:nowrap" onclick="quickGrantPro()">💎 منح Pro</button>
+        </div>
+        <div id="quick-grant-result" style="display:none;margin-top:12px;font-size:12px;padding:10px;border-radius:8px"></div>
+      </div>
+
       <div class="table-wrap">
         <div class="table-header">
           <div class="table-title">👥 المستخدمين</div>
@@ -1100,6 +1131,91 @@ async function deleteTemplate(docId, name){
     loadTemplates();
     loadDashboard();
   }catch(e){ showToast('❌ ' + e.message); }
+}
+
+// ===== QUICK GRANT PRO =====
+async function quickGrantPro() {
+  const email    = document.getElementById('quick-grant-email').value.trim();
+  const days     = parseInt(document.getElementById('quick-grant-duration').value);
+  const note     = document.getElementById('quick-grant-note').value.trim();
+  const resultEl = document.getElementById('quick-grant-result');
+
+  if (!email) {
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(248,113,113,0.1)';
+    resultEl.style.border = '1px solid rgba(248,113,113,0.2)';
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = '❌ أدخل الإيميل أولاً';
+    return;
+  }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري...';
+
+  try {
+    const now = new Date().toISOString();
+    const expiry = new Date();
+    expiry.setDate(expiry.getDate() + days);
+    const expiryISO = days >= 36500 ? '2099-12-31T23:59:59Z' : expiry.toISOString();
+    const plan = days >= 36500 ? 'lifetime' : days >= 365 ? 'yearly' : 'monthly';
+
+    // تحقق إذا يوجد اشتراك — update أو insert
+    const { data: existing } = await sbClient
+      .from('subscriptions')
+      .select('id')
+      .eq('user_email', email)
+      .neq('status', 'cancelled')
+      .limit(1);
+
+    let subError;
+    if (existing && existing.length > 0) {
+      const { error } = await sbClient.from('subscriptions').update({
+        plan, status: 'active', expires_at: expiryISO,
+        updated_at: now, note: note || 'منح يدوي', is_manual: true
+      }).eq('id', existing[0].id);
+      subError = error;
+    } else {
+      const { error } = await sbClient.from('subscriptions').insert({
+        user_email: email, plan, status: 'active',
+        starts_at: now, expires_at: expiryISO,
+        is_manual: true, note: note || 'منح يدوي',
+        created_at: now, updated_at: now
+      });
+      subError = error;
+    }
+
+    if (subError) throw subError;
+
+    // سجّل في Firebase
+    await db.collection('subscription_logs').add({
+      action: 'quick_grant', email, days, plan,
+      note: note || 'منح يدوي',
+      by: currentAdminEmail || 'admin',
+      at: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    const daysLabel = days >= 36500 ? 'مدى الحياة' : days + ' يوم';
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(74,222,128,0.1)';
+    resultEl.style.border = '1px solid rgba(74,222,128,0.2)';
+    resultEl.style.color = 'var(--green)';
+    resultEl.textContent = '✅ تم منح Pro لـ ' + email + ' لمدة ' + daysLabel;
+
+    document.getElementById('quick-grant-email').value = '';
+    document.getElementById('quick-grant-note').value = '';
+    showToast('✅ تم منح Pro بنجاح');
+
+  } catch(e) {
+    resultEl.style.display = 'block';
+    resultEl.style.background = 'rgba(248,113,113,0.1)';
+    resultEl.style.border = '1px solid rgba(248,113,113,0.2)';
+    resultEl.style.color = 'var(--red)';
+    resultEl.textContent = '❌ ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💎 منح Pro';
+  }
 }
 
 // ===== USERS =====
